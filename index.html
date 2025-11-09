@@ -17,14 +17,14 @@
     .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ff5a5a);display:flex;align-items:center;justify-content:center;font-weight:800;color:#031020}
     h1{font-size:18px;margin:0}
     .muted{color:var(--muted);font-size:13px}
-    main{display:grid;grid-template-columns:1fr 380px;gap:20px;padding:22px;max-width:1200px;margin:18px auto}
+    main{display:grid;grid-template-columns:1fr 380px;gap:20px;padding:22px;max-width:1200px;margin:18px auto;animation:fadeIn 1s ease-in;}
     @media(max-width:980px){main{grid-template-columns:1fr;padding:16px} aside{order:2;margin-top:18px}}
-    /* Catalog */
     .controls{display:flex;gap:10px;align-items:center;margin-bottom:12px}
     input[type=search]{padding:9px 12px;border-radius:10px;background:transparent;border:1px solid var(--card-border);color:inherit;min-width:180px}
     select{padding:9px 10px;border-radius:10px;background:transparent;border:1px solid var(--card-border);color:inherit}
     .catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); padding:12px;border-radius:12px;border:1px solid var(--card-border); display:flex;flex-direction:column; gap:8px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); padding:12px;border-radius:12px;border:1px solid var(--card-border); display:flex;flex-direction:column; gap:8px;transition:transform .3s}
+    .card:hover{transform:scale(1.04)}
     .thumb{height:140px;border-radius:8px;background:#071a2a;display:flex;align-items:center;justify-content:center;overflow:hidden}
     .thumb img{width:100%;height:100%;object-fit:cover}
     .title{font-weight:700}
@@ -33,22 +33,22 @@
     .btn{padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#031020;font-weight:800;cursor:pointer}
     .btn.ghost{background:transparent;border:1px solid var(--card-border); color:var(--muted); font-weight:700}
     .link-btn{background:transparent;border:1px dashed rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;color:var(--muted);text-decoration:none}
-    /* Sidebar / form */
     aside{background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent); padding:16px;border-radius:12px;border:1px solid var(--card-border)}
     aside h2{margin:0 0 8px 0}
     label{display:block;font-size:13px;margin-top:10px;color:var(--muted)}
-    input[type=text], input[type=url], textarea, input[type=email]{
-      width:100%; padding:10px;border-radius:8px;background:transparent;border:1px solid var(--card-border); color:inherit;
-    }
+    input[type=text], input[type=url], textarea, input[type=email]{width:100%; padding:10px;border-radius:8px;background:transparent;border:1px solid var(--card-border); color:inherit;}
     textarea{resize:vertical}
     .small{font-size:12px;color:var(--muted);margin-top:6px}
     .list-empty{color:var(--muted);padding:22px;text-align:center;border-radius:8px;background:rgba(255,255,255,0.01)}
-    footer{max-width:1200px;margin:20px auto;color:var(--muted);text-align:center;font-size:13px}
     .topbar{display:flex;gap:8px;align-items:center}
     .count-bubble{background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:999px;font-weight:700}
     .row{display:flex;gap:8px}
     .tag{padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);font-size:12px;color:var(--muted)}
     .card .meta{display:flex;gap:8px;flex-wrap:wrap}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    footer{background:#071022;color:#9fb0c2;text-align:center;padding:18px;margin-top:40px;border-top:1px solid rgba(255,255,255,0.05);font-size:13px;position:relative;overflow:hidden;font-family:Inter,system-ui,Arial;animation:fadeIn 1.2s ease-in;}
+    @keyframes neonGlow{0%{text-shadow:0 0 4px #00ffff,0 0 10px #00ffff;color:#0ff;}50%{text-shadow:0 0 12px #00ffcc,0 0 24px #00ffff;color:#00ffee;}100%{text-shadow:0 0 4px #00ffff,0 0 10px #00ffff;color:#0ff;}}
+    .neon{animation:neonGlow 3s infinite ease-in-out;font-weight:600;}
   </style>
 </head>
 <body>
@@ -77,61 +77,39 @@
         <button id="refresh" class="btn ghost">Atualizar</button>
       </div>
 
-      <div id="catalog" class="catalog">
-        <!-- Cards serão renderizados aqui -->
-      </div>
-
-      <div id="empty" class="list-empty" style="display:none;margin-top:12px">
-        Nenhum jogo encontrado. Adicione novos jogos na aba ao lado.
-      </div>
+      <div id="catalog" class="catalog"></div>
+      <div id="empty" class="list-empty" style="display:none;margin-top:12px">Nenhum jogo encontrado. Adicione novos jogos na aba ao lado.</div>
     </section>
 
     <aside>
       <h2>Enviar Jogo</h2>
-      <div class="small">Envie um link de jogo para aparecer na loja. (Teste com imagens públicas)</div>
-
+      <div class="small">Envie um link de jogo para aparecer na loja.</div>
       <label for="g-name">Nome do jogo</label>
       <input id="g-name" type="text" placeholder="Nome do jogo" />
-
       <label for="g-desc">Descrição curta</label>
-      <input id="g-desc" type="text" placeholder="Descrição (ex: Aventura, single-player)" />
-
-      <label for="g-img">URL da imagem (thumbnail)</label>
+      <input id="g-desc" type="text" placeholder="Descrição" />
+      <label for="g-img">URL da imagem</label>
       <input id="g-img" type="url" placeholder="https://exemplo.com/thumb.jpg" />
-
       <label for="g-link">Link do jogo / download</label>
       <input id="g-link" type="url" placeholder="https://exemplo.com/download" />
-
       <label for="g-tag">Tag (ex: indie, rpg)</label>
       <input id="g-tag" type="text" placeholder="Categoria / tag" />
-
       <div style="display:flex;gap:8px;margin-top:12px">
         <button id="send" class="btn">Enviar Jogo</button>
         <button id="clear" class="btn ghost">Limpar</button>
       </div>
-
       <div id="form-msg" class="small" style="margin-top:10px"></div>
-
-      <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.02)" />
-
-      <div class="muted small">Observações:</div>
-      <ul class="muted" style="padding-left:18px;margin-top:6px">
-        <li>Os links enviados aparecem para todos — verifique conteúdo antes de compartilhar.</li>
-        <li>Regra de segurança: verifique suas regras do Firebase para testes.</li>
-      </ul>
     </aside>
   </main>
 
   <footer>
-    Loha de Games — Teste com Firebase Realtime Database • Feito pra você
+    <p>© 2025 <strong>GbzStore</strong> — Todos os direitos reservados.</p>
+    <p>Desenvolvido por <span class="neon">GbzinStudio</span> | Powered by Firebase</p>
   </footer>
 
-  <!-- Firebase (CDN) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
   <script>
-    // ========== CONFIG FIREBASE (insira sua config) ==========
     const firebaseConfig = {
       apiKey: "AIzaSyBfUH7E-il5iOttjtHKqrqiYsFAmNt9d5s",
       authDomain: "booyahmind.firebaseapp.com",
@@ -141,22 +119,14 @@
       messagingSenderId: "893667760259",
       appId: "1:893667760259:web:4796b60789ed9916b0a3b6"
     };
-
-    // Inicializa Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
-    // Referência raiz onde salvaremos jogos
     const GAMES_PATH = 'games';
-
-    // Elements
     const catalogEl = document.getElementById('catalog');
     const emptyEl = document.getElementById('empty');
     const totalCountEl = document.getElementById('total-count');
     const searchEl = document.getElementById('search');
     const sortEl = document.getElementById('sort');
-    const refreshBtn = document.getElementById('refresh');
-
     const sendBtn = document.getElementById('send');
     const clearBtn = document.getElementById('clear');
     const nameIn = document.getElementById('g-name');
@@ -165,188 +135,15 @@
     const linkIn = document.getElementById('g-link');
     const tagIn = document.getElementById('g-tag');
     const formMsg = document.getElementById('form-msg');
-
-    // Estado local cache
-    let gamesCache = []; // [{id, name, desc, img, link, tag, ts}]
-
-    // ---------- HELPERS ----------
-    function formatDate(ts){
-      try{
-        const d = new Date(ts);
-        return d.toLocaleString();
-      }catch(e){ return '';}
-    }
-    function placeholderSVG(text){
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='450'><rect width='100%' height='100%' fill='#0b2a3b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#9fd3e6' font-size='28' font-family='Arial'>${text}</text></svg>`;
-      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-    }
-    function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
-
-    // ---------- RENDER ----------
-    function renderCatalog(list){
-      catalogEl.innerHTML = '';
-      if(!list || list.length === 0){
-        emptyEl.style.display = 'block';
-        totalCountEl.textContent = 0;
-        return;
-      }
-      emptyEl.style.display = 'none';
-      totalCountEl.textContent = list.length;
-
-      list.forEach(item=>{
-        const card = el('div','card');
-        const thumb = el('div','thumb');
-        const img = document.createElement('img');
-        img.alt = item.name || 'thumb';
-        img.src = item.img || placeholderSVG(item.name || 'Game');
-        thumb.appendChild(img);
-
-        const title = el('div','title', item.name || '—');
-        const desc = el('div','desc', item.desc ? item.desc : (item.tag || ''));
-
-        const meta = el('div','meta');
-        const tag = el('div','tag', item.tag || 'sem-tag');
-        const date = el('div','muted small', formatDate(item.ts || 0));
-        meta.appendChild(tag);
-        meta.appendChild(date);
-
-        const bottom = el('div','price-link');
-        const linkA = document.createElement('a');
-        linkA.href = item.link || '#';
-        linkA.target = '_blank';
-        linkA.rel = 'noopener';
-        linkA.className = 'link-btn';
-        linkA.textContent = 'Abrir / Baixar';
-
-        const addBtn = document.createElement('button');
-        addBtn.className = 'btn ghost';
-        addBtn.textContent = 'Visitar';
-        addBtn.onclick = ()=> window.open(item.link,'_blank');
-
-        bottom.appendChild(linkA);
-        bottom.appendChild(addBtn);
-
-        card.appendChild(thumb);
-        card.appendChild(title);
-        card.appendChild(desc);
-        card.appendChild(meta);
-        card.appendChild(bottom);
-
-        catalogEl.appendChild(card);
-      });
-    }
-
-    // ---------- DB LISTEN ----------
-    function startListening(){
-      const ref = db.ref(GAMES_PATH);
-      // Ouvem dados e atualizam cache em tempo real
-      ref.on('value', snapshot=>{
-        const val = snapshot.val();
-        gamesCache = [];
-        if(val){
-          // val é objeto { key: {name,desc,img,link,tag,ts} }
-          Object.keys(val).forEach(k=>{
-            const obj = val[k];
-            gamesCache.push({
-              id: k,
-              name: obj.name || '',
-              desc: obj.desc || '',
-              img: obj.img || '',
-              link: obj.link || '',
-              tag: obj.tag || '',
-              ts: obj.ts || 0
-            });
-          });
-          // ordenar por timestamp desc (mais recentes primeiro)
-          gamesCache.sort((a,b)=>b.ts - a.ts);
-        }
-        applyFiltersAndRender();
-      }, err=>{
-        console.error('Erro ao ler jogos:', err);
-        formMsg.textContent = 'Erro ao conectar ao Firebase. Veja o console.';
-      });
-    }
-
-    // ---------- FILTER / SORT ----------
-    function applyFiltersAndRender(){
-      const q = (searchEl.value || '').trim().toLowerCase();
-      let list = gamesCache.slice();
-
-      if(q){
-        list = list.filter(i=>{
-          return (i.name && i.name.toLowerCase().includes(q)) ||
-                 (i.desc && i.desc.toLowerCase().includes(q)) ||
-                 (i.tag && i.tag.toLowerCase().includes(q));
-        });
-      }
-
-      const sort = sortEl.value;
-      if(sort === 'name'){
-        list.sort((a,b)=> (a.name||'').localeCompare(b.name || '', 'pt-BR'));
-      }else{ // newest already sorted by ts desc
-        list.sort((a,b)=>b.ts - a.ts);
-      }
-
-      renderCatalog(list);
-    }
-
-    // ---------- SEND FORM ----------
-    function postGame(){
-      const name = (nameIn.value || '').trim();
-      const desc = (descIn.value || '').trim();
-      const img = (imgIn.value || '').trim();
-      const link = (linkIn.value || '').trim();
-      const tag = (tagIn.value || '').trim();
-
-      if(!name || !link){
-        formMsg.textContent = 'Preencha pelo menos Nome e Link.';
-        return;
-      }
-      formMsg.textContent = 'Enviando...';
-
-      const newRef = db.ref(GAMES_PATH).push();
-      const payload = {
-        name,
-        desc,
-        img: img || '',
-        link,
-        tag: tag || '',
-        ts: Date.now()
-      };
-
-      newRef.set(payload)
-        .then(()=>{
-          formMsg.textContent = 'Jogo enviado! Obrigado.';
-          nameIn.value=''; descIn.value=''; imgIn.value=''; linkIn.value=''; tagIn.value='';
-          // scroll to catalog / highlight not implemented (pode adicionar)
-          setTimeout(()=> formMsg.textContent='', 3000);
-        })
-        .catch(err=>{
-          console.error('Erro ao enviar:', err);
-          formMsg.textContent = 'Erro ao enviar. Confira console e regras do DB.';
-        });
-    }
-
-    // ---------- EVENTS ----------
-    sendBtn.addEventListener('click', ()=> {
-      postGame();
-    });
-    clearBtn.addEventListener('click', ()=> {
-      nameIn.value=''; descIn.value=''; imgIn.value=''; linkIn.value=''; tagIn.value=''; formMsg.textContent='';
-    });
-
-    searchEl.addEventListener('input', ()=> applyFiltersAndRender());
-    sortEl.addEventListener('change', ()=> applyFiltersAndRender());
-    refreshBtn.addEventListener('click', ()=> applyFiltersAndRender());
-
-    // init
-    startListening();
-    // fetch once quickly (in case listener demora)
-    db.ref(GAMES_PATH).once('value').then(snap=>{
-      // handled by the 'value' listener anyway
-    }).catch(err=>{
-      console.warn('fetch once failed', err);
-    });
+    let gamesCache = [];
+    function formatDate(ts){ try{const d=new Date(ts);return d.toLocaleString();}catch(e){return'';} }
+    function placeholderSVG(text){ const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='800' height='450'><rect width='100%' height='100%' fill='#0b2a3b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#9fd3e6' font-size='28' font-family='Arial'>${text}</text></svg>`; return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg); }
+    function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e;}
+    function renderCatalog(list){catalogEl.innerHTML='';if(!list||list.length===0){emptyEl.style.display='block';totalCountEl.textContent=0;return;}emptyEl.style.display='none';totalCountEl.textContent=list.length;list.forEach(item=>{const card=el('div','card');const thumb=el('div','thumb');const img=document.createElement('img');img.alt=item.name||'thumb';img.src=item.img||placeholderSVG(item.name||'Game');thumb.appendChild(img);const title=el('div','title',item.name||'—');const desc=el('div','desc',item.desc||(item.tag||''));const meta=el('div','meta');const tag=el('div','tag',item.tag||'sem-tag');const date=el('div','muted small',formatDate(item.ts||0));meta.appendChild(tag);meta.appendChild(date);const bottom=el('div','price-link');const linkA=document.createElement('a');linkA.href=item.link||'#';linkA.target='_blank';linkA.rel='noopener';linkA.className='link-btn';linkA.textContent='Abrir / Baixar';const addBtn=document.createElement('button');addBtn.className='btn ghost';addBtn.textContent='Visitar';addBtn.onclick=()=>window.open(item.link,'_blank');bottom.appendChild(linkA);bottom.appendChild(addBtn);card.appendChild(thumb);card.appendChild(title);card.appendChild(desc);card.appendChild(meta);card.appendChild(bottom);catalogEl.appendChild(card);});}
+    function startListening(){const ref=db.ref(GAMES_PATH);ref.on('value',snapshot=>{const val=snapshot.val();gamesCache=[];if(val){Object.keys(val).forEach(k=>{const o=val[k];gamesCache.push({id:k,name:o.name||'',desc:o.desc||'',img:o.img||'',link:o.link||'',tag:o.tag||'',ts:o.ts||0});});gamesCache.sort((a,b)=>b.ts-a.ts);}applyFiltersAndRender();});}
+    function applyFiltersAndRender(){const q=(searchEl.value||'').trim().toLowerCase();let list=gamesCache.slice();if(q){list=list.filter(i=>(i.name&&i.name.toLowerCase().includes(q))||(i.desc&&i.desc.toLowerCase().includes(q))||(i.tag&&i.tag.toLowerCase().includes(q)));}if(sortEl.value==='name'){list.sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR'));}else{list.sort((a,b)=>b.ts-a.ts);}renderCatalog(list);}
+    function postGame(){const name=(nameIn.value||'').trim();const desc=(descIn.value||'').trim();const img=(imgIn.value||'').trim();const link=(linkIn.value||'').trim();const tag=(tagIn.value||'').trim();if(!name||!link){formMsg.textContent='Preencha pelo menos Nome e Link.';return;}formMsg.textContent='Enviando...';const payload={name,desc,img,link,tag,ts:Date.now()};db.ref(GAMES_PATH).push(payload).then(()=>{formMsg.textContent='Jogo enviado!';nameIn.value='';descIn.value='';imgIn.value='';linkIn.value='';tagIn.value='';setTimeout(()=>formMsg.textContent='',3000);});}
+    sendBtn.onclick=postGame;clearBtn.onclick=()=>{nameIn.value='';descIn.value='';imgIn.value='';linkIn.value='';tagIn.value='';formMsg.textContent='';};searchEl.oninput=applyFiltersAndRender;sortEl.onchange=applyFiltersAndRender;startListening();
   </script>
 </body>
 </html>
