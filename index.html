@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loja Teste — Só HTML (com JS inline)</title>
+  <style>
+    :root{--bg:#0f1720;--card:#0b1320;--accent:#ff9f1c;--muted:#98a2b3;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,var(--bg),#071023);color:#e6eef8;-webkit-font-smoothing:antialiased}
+    header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);backdrop-filter:blur(4px)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff6b6b);display:flex;align-items:center;justify-content:center;font-weight:700;color:#071023}
+    h1{font-size:18px;margin:0}
+    .controls{display:flex;gap:10px;align-items:center}
+    input[type=search]{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;min-width:200px}
+    button.icon{background:var(--glass);border:1px solid rgba(255,255,255,0.04);color:inherit;padding:8px 10px;border-radius:8px;cursor:pointer}
+
+    main{display:grid;grid-template-columns:1fr 340px;gap:20px;padding:22px}
+    @media (max-width:900px){main{grid-template-columns:1fr}} 
+
+    /* Product grid */
+    .catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
+    .thumb{height:140px;border-radius:8px;background:#07203a;display:flex;align-items:center;justify-content:center}
+    .thumb img{max-width:100%;max-height:100%;object-fit:contain}
+    .title{font-weight:600}
+    .meta{color:var(--muted);font-size:13px}
+    .price{font-size:16px;font-weight:700}
+    .actions{display:flex;gap:8px}
+    .btn{flex:1;padding:8px;border-radius:8px;border:0;background:var(--accent);color:#071023;font-weight:700;cursor:pointer}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--muted);font-weight:600}
+
+    /* Cart */
+    .cart{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .cart h2{margin:0 0 10px 0}
+    .line{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.02)}
+    .line:last-child{border-bottom:none}
+    .qty{display:flex;gap:6px;align-items:center}
+    .qty button{padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;cursor:pointer}
+    .totals{margin-top:12px;display:flex;justify-content:space-between;font-weight:700}
+    .checkout{margin-top:12px;padding:10px;border-radius:8px;border:0;background:#0ea5a3;color:#022;cursor:pointer;font-weight:800}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(2,6,23,0.6),rgba(2,6,23,0.85));padding:20px}
+    .modal.open{display:flex}
+    .sheet{background:#071126;padding:18px;border-radius:12px;width:100%;max-width:560px;border:1px solid rgba(255,255,255,0.04)}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input[type=text],input[type=email],textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .row{display:flex;gap:8px}
+    .muted{color:var(--muted);font-size:13px}
+
+    footer{padding:12px 22px;color:var(--muted);font-size:13px;text-align:center}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">GT</div>
+      <div>
+        <h1>Loja Teste</h1>
+        <div class="muted">Exemplo funcional (só um arquivo .html)</div>
+      </div>
+    </div>
+    <div class="controls">
+      <input id="search" type="search" placeholder="Pesquisar produtos..." />
+      <button id="open-cart" class="icon">Carrinho (<span id="cart-count">0</span>)</button>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="muted">Mostrando <span id="shown-count">0</span> produtos</div>
+        <div style="display:flex;gap:8px">
+          <select id="sort">
+            <option value="default">Ordenar: Padrão</option>
+            <option value="price-asc">Preço ↑</option>
+            <option value="price-desc">Preço ↓</option>
+            <option value="name">Nome</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="catalog" class="catalog"></div>
+    </section>
+
+    <aside class="cart">
+      <h2>Carrinho</h2>
+      <div id="cart-lines" style="max-height:360px;overflow:auto"></div>
+      <div class="totals">
+        <div>Total</div>
+        <div id="cart-total">R$ 0,00</div>
+      </div>
+      <button id="checkout" class="checkout">Finalizar Compra</button>
+      <div style="margin-top:10px"><button id="clear-cart" class="btn secondary">Limpar Carrinho</button></div>
+    </aside>
+  </main>
+
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true">
+      <h3>Pagamento (teste)</h3>
+      <p class="muted">Preencha os dados abaixo — este é apenas um formulário de teste, nenhum pagamento será processado.</p>
+      <div style="margin-top:10px">
+        <label>Nome</label>
+        <input id="buyer-name" type="text" placeholder="Seu nome" />
+      </div>
+      <div style="margin-top:10px">
+        <label>Email</label>
+        <input id="buyer-email" type="email" placeholder="seu@exemplo.com" />
+      </div>
+      <div style="margin-top:10px">
+        <label>Endereço</label>
+        <textarea id="buyer-address" rows="2" placeholder="Rua, número, cidade"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button id="cancel" class="btn secondary">Cancelar</button>
+        <button id="confirm" class="btn">Confirmar (simular)</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Loja Teste — Arquivo único em HTML. Salve como <code>loja-teste.html</code> e abra no navegador.
+  </footer>
+
+  <script>
+    // Produtos de exemplo (pode editar aqui)
+    const products = [
+      {id:1,name:'Camisa Gamer',desc:'Camiseta preta com estampa',price:49.9,tag:'roupa',img:placeholder('Camisa')},
+      {id:2,name:'Boné Snapback',desc:'Boné ajustável',price:39.5,tag:'acessório',img:placeholder('Boné')},
+      {id:3,name:'Caneca Metal',desc:'Caneca 350ml',price:29.9,tag:'casa',img:placeholder('Caneca')},
+      {id:4,name:'Mousepad XL',desc:'Mousepad grande 900x400',price:59.0,tag:'gamer',img:placeholder('Mousepad')},
+      {id:5,name:'Adesivo Pack',desc:'Kit com 12 adesivos',price:12.5,tag:'decoração',img:placeholder('Adesivos')},
+      {id:6,name:'Mochila Compacta',desc:'Mochila 20L',price:129.0,tag:'acessório',img:placeholder('Mochila')}
+    ];
+
+    // ---------- util
+    function formatBRL(v){return 'R$ '+v.toFixed(2).replace('.',',')}
+    function placeholder(text){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%' height='100%' fill='#0b2a3b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#9fd3e6' font-size='28' font-family='Arial'>${text}</text></svg>`
+      return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg)
+    }
+
+    // ---------- state
+    let state = {query:'',sort:'default',cart:{}};
+
+    // load cart from localStorage
+    function loadState(){
+      try{const s=localStorage.getItem('lojaTesteState');if(s) state=JSON.parse(s);}catch(e){}
+      if(!state.cart) state.cart={}
+    }
+    function saveState(){localStorage.setItem('lojaTesteState',JSON.stringify(state))}
+
+    // ---------- rendering catalog
+    const catalogEl=document.getElementById('catalog');
+    const shownCount=document.getElementById('shown-count');
+    function renderCatalog(){
+      let list = products.filter(p=>p.name.toLowerCase().includes(state.query)||p.desc.toLowerCase().includes(state.query)||p.tag.toLowerCase().includes(state.query));
+      if(state.sort==='price-asc') list.sort((a,b)=>a.price-b.price);
+      if(state.sort==='price-desc') list.sort((a,b)=>b.price-a.price);
+      if(state.sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+      catalogEl.innerHTML='';
+      shownCount.textContent=list.length;
+      list.forEach(p=>{
+        const c=document.createElement('div');c.className='card';
+        c.innerHTML=`
+          <div class="thumb"><img src="${p.img}" alt="${p.name}"></div>
+          <div>
+            <div class="title">${p.name}</div>
+            <div class="meta">${p.desc}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="price">${formatBRL(p.price)}</div>
+            <div class="actions">
+              <button class="btn" data-id="${p.id}">Adicionar</button>
+              <button class="btn secondary" data-id-view="${p.id}">Ver</button>
+            </div>
+          </div>
+        `;
+        catalogEl.appendChild(c);
+      })
+
+      // attach events
+      document.querySelectorAll('.btn[data-id]').forEach(b=>b.onclick=e=>addToCart(Number(e.currentTarget.dataset.id)));
+      document.querySelectorAll('.btn.secondary[data-id-view]').forEach(b=>b.onclick=e=>alert('Produto: '+products.find(p=>p.id==e.currentTarget.dataset.id).name+'\n\n'+products.find(p=>p.id==e.currentTarget.dataset.id).desc));
+    }
+
+    // ---------- cart
+    function addToCart(id,qty=1){
+      state.cart[id]=(state.cart[id]||0)+qty;saveState();renderCart();}
+    function removeFromCart(id){delete state.cart[id];saveState();renderCart();}
+    function changeQty(id,qty){if(qty<=0) removeFromCart(id); else state.cart[id]=qty; saveState(); renderCart();}
+
+    const cartLines=document.getElementById('cart-lines');
+    const cartTotal=document.getElementById('cart-total');
+    const cartCount=document.getElementById('cart-count');
+
+    function renderCart(){
+      cartLines.innerHTML='';
+      let total=0, count=0;
+      const ids=Object.keys(state.cart).map(Number);
+      if(ids.length===0){cartLines.innerHTML='<div class="muted">O carrinho está vazio.</div>'}
+      ids.forEach(id=>{
+        const p=products.find(x=>x.id===id);
+        const q=state.cart[id];
+        const line=document.createElement('div');line.className='line';
+        line.innerHTML=`
+          <div style="flex:1">
+            <div style="font-weight:700">${p.name}</div>
+            <div class="muted">${formatBRL(p.price)} x ${q} = <strong>${formatBRL(p.price*q)}</strong></div>
+          </div>
+          <div class="qty">
+            <button data-dec="${id}">-</button>
+            <div style="min-width:26px;text-align:center">${q}</div>
+            <button data-inc="${id}">+</button>
+            <button data-del="${id}" style="margin-left:8px">✕</button>
+          </div>
+        `;
+        cartLines.appendChild(line);
+        total += p.price*q; count+=q;
+      });
+      cartTotal.textContent = formatBRL(total);
+      cartCount.textContent = count;
+
+      // events
+      cartLines.querySelectorAll('[data-inc]').forEach(b=>b.onclick=e=>changeQty(Number(e.currentTarget.dataset.inc), state.cart[Number(e.currentTarget.dataset.inc)] + 1));
+      cartLines.querySelectorAll('[data-dec]').forEach(b=>b.onclick=e=>changeQty(Number(e.currentTarget.dataset.dec), state.cart[Number(e.currentTarget.dataset.dec)] - 1));
+      cartLines.querySelectorAll('[data-del]').forEach(b=>b.onclick=e=>removeFromCart(Number(e.currentTarget.dataset.del)));
+    }
+
+    // ---------- modal
+    const modal=document.getElementById('modal');
+    document.getElementById('checkout').onclick=()=>{
+      if(Object.keys(state.cart).length===0){alert('Carrinho vazio. Adicione produtos antes de finalizar.');return}
+      modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+    }
+    document.getElementById('cancel').onclick=()=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
+    document.getElementById('confirm').onclick=()=>{
+      const name=document.getElementById('buyer-name').value.trim();
+      const email=document.getElementById('buyer-email').value.trim();
+      if(!name||!email){alert('Preencha nome e email.');return}
+      // simulate order
+      const order = {id:Date.now(),name,email,address:document.getElementById('buyer-address').value,items:state.cart,total:cartTotal.textContent};
+      console.log('Pedido simulado',order);
+      alert('Pedido simulado realizado!\n\nObrigado, '+name+'\nTotal: '+cartTotal.textContent);
+      state.cart={}; saveState(); renderCart(); modal.classList.remove('open');
+    }
+
+    // ---------- search & sort
+    document.getElementById('search').addEventListener('input',e=>{state.query=e.target.value.toLowerCase();renderCatalog();});
+    document.getElementById('sort').addEventListener('change',e=>{state.sort=e.target.value;renderCatalog();});
+    document.getElementById('open-cart').addEventListener('click',()=>{
+      const el=document.querySelector('aside');el.scrollIntoView({behavior:'smooth'});
+    })
+
+    document.getElementById('clear-cart').onclick=()=>{if(confirm('Limpar o carrinho?')){state.cart={};saveState();renderCart();}}
+
+    // init
+    loadState();renderCatalog();renderCart();
+    // update shown count and attach resize behavior
+  </script>
+</body>
+</html>
