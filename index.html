@@ -1,329 +1,808 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎮 GbzStore 2.0 - Loja Gamer</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GbzStore — Painel (Loja de Games)</title>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-  :root {
-    --bg-dark: #060c16;
-    --bg-light: #f4f8ff;
-    --text-dark: #fff;
-    --text-light: #111;
-    --primary: #00ffff;
-    --primary-glow: #00ffff99;
-    --card-dark: #101d33;
-    --card-light: #ffffff;
+  /* === Tema "antigo / duro" (clean, painel lateral) === */
+  :root{
+    --bg:#0b0d10;
+    --panel:#0f1317;
+    --muted:#9aa9b6;
+    --accent:#ff8a00;
+    --accent-2:#00d4ff;
+    --card:#0b1116;
+    --border:rgba(255,255,255,0.03);
+    --danger:#ff5555;
+    --success:#22c55e;
+    --glass: rgba(255,255,255,0.02);
   }
-
-  body {
-    margin:0;
-    font-family:'Poppins',sans-serif;
-    background:var(--bg-dark);
-    color:var(--text-dark);
-    overflow-x:hidden;
-    transition:background 0.5s, color 0.5s;
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#051018);color:#e6eef8}
+  /* Layout */
+  .app{display:flex;min-height:100vh}
+  aside.sidebar{
+    width:260px;background:linear-gradient(180deg,var(--panel),#07101a);border-right:1px solid var(--border);
+    padding:20px;display:flex;flex-direction:column;gap:12px;position:fixed;left:0;top:0;bottom:0;
   }
-
-  header {
-    background:#0b1320;
-    padding:25px;
-    text-align:center;
-    font-size:28px;
-    color:var(--primary);
-    font-weight:800;
-    letter-spacing:2px;
-    text-shadow:0 0 15px var(--primary-glow);
-    box-shadow:0 0 20px #00ffff44;
-    position:sticky;
-    top:0;
-    z-index:1000;
+  .logo{
+    display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--border);
   }
-
-  nav {
-    display:flex;
-    justify-content:center;
-    flex-wrap:wrap;
-    gap:20px;
-    background:#0b1320;
-    padding:15px;
+  .logo .mark{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff5a5a);display:flex;align-items:center;justify-content:center;font-weight:800;color:#071018}
+  .logo h1{font-size:16px;margin:0}
+  nav.menu{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  button.nav-btn{
+    background:transparent;border:1px solid transparent;padding:10px 12px;border-radius:8px;color:var(--muted);text-align:left;cursor:pointer;font-weight:700;
   }
-
-  nav button {
-    background:var(--primary);
-    border:none;
-    color:#000;
-    padding:10px 25px;
-    border-radius:10px;
-    font-weight:bold;
-    cursor:pointer;
-    transition:0.3s;
+  button.nav-btn.active{background:var(--glass);border-color:var(--border);color:#fff}
+  .sidebar .section-title{font-size:12px;color:var(--muted);margin-top:8px;margin-bottom:6px}
+  .sidebar .small{font-size:12px;color:var(--muted)}
+  /* Main content */
+  .main{margin-left:260px;padding:20px;flex:1;min-height:100vh}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+  .topbar .left{display:flex;gap:12px;align-items:center}
+  .topbar .right{display:flex;gap:8px;align-items:center}
+  input[type=search]{padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit;min-width:280px}
+  /* Grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .card{
+    background:linear-gradient(180deg,var(--card),rgba(255,255,255,0.01));
+    padding:12px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;
   }
-
-  nav button:hover {
-    background:#00cccc;
-    transform:scale(1.08);
+  .thumb{height:160px;border-radius:8px;background:#081522;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .title{font-weight:800}
+  .meta{font-size:13px;color:var(--muted)}
+  .row{display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#071018;font-weight:800;cursor:pointer}
+  .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:700}
+  .btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--muted)}
+  .muted{color:var(--muted)}
+  /* Panels inside sidebar */
+  .side-panel{padding:12px;border-radius:8px;background:linear-gradient(180deg,transparent,rgba(255,255,255,0.01));border:1px solid var(--border)}
+  /* Forms */
+  label{font-size:13px;color:var(--muted);display:block;margin-top:8px}
+  input[type=text], input[type=url], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit}
+  textarea{min-height:80px;resize:vertical}
+  .small-muted{font-size:12px;color:var(--muted)}
+  /* Modals */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(1,4,10,0.6);z-index:1200}
+  .modal.open{display:flex}
+  .sheet{background:#071226;padding:18px;border-radius:10px;border:1px solid var(--border);width:100%;max-width:720px}
+  /* Stats */
+  .stats{display:flex;gap:12px}
+  .stat{padding:10px;border-radius:8px;background:linear-gradient(180deg,transparent,rgba(255,255,255,0.01));border:1px solid var(--border);flex:1;text-align:center}
+  .stat .num{font-weight:800;font-size:18px}
+  /* small utilities */
+  .tag{padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .notice{padding:8px;border-radius:8px;background:#081624;border:1px solid rgba(255,255,255,0.02);color:var(--muted)}
+  /* responsive */
+  @media (max-width:980px){
+    aside.sidebar{position:relative;width:100%;display:flex;flex-direction:row;overflow:auto;height:auto;padding:10px}
+    .main{margin-left:0;padding:12px}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
   }
-
-  #modeToggle {
-    background:transparent;
-    color:var(--primary);
-    border:1px solid var(--primary);
-    border-radius:8px;
-    font-size:18px;
-  }
-
-  .content {
-    padding:20px;
-    display:none;
-    animation:fadeIn 0.6s ease forwards;
-  }
-
-  .active {display:block;}
-
-  .game-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    gap:25px;
-  }
-
-  .game-card {
-    background:var(--card-dark);
-    padding:18px;
-    border-radius:15px;
-    box-shadow:0 0 20px #0008;
-    text-align:center;
-    transition:0.3s;
-  }
-
-  .game-card:hover {
-    transform:scale(1.05);
-    box-shadow:0 0 20px var(--primary-glow);
-  }
-
-  .game-card img {
-    width:100%;
-    border-radius:10px;
-    height:var(--img-height,180px);
-    object-fit:cover;
-    transition:0.3s;
-  }
-
-  h2 {
-    text-align:center;
-    color:var(--primary);
-    text-shadow:0 0 10px var(--primary-glow);
-    margin-bottom:25px;
-  }
-
-  input, textarea {
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
-    border:none;
-    outline:none;
-    background:#16263d;
-    color:#fff;
-    transition:0.3s;
-  }
-
-  input:focus {
-    box-shadow:0 0 10px var(--primary-glow);
-  }
-
-  label {
-    font-size:14px;
-    color:#9fcffb;
-    margin-top:10px;
-    display:block;
-  }
-
-  #previewImg {
-    max-width:100%;
-    border-radius:10px;
-    display:none;
-    margin-top:10px;
-    box-shadow:0 0 15px #00ffff55;
-  }
-
-  button.submit {
-    background:var(--primary);
-    color:#000;
-    font-weight:bold;
-    border:none;
-    padding:12px 28px;
-    border-radius:10px;
-    cursor:pointer;
-    transition:0.3s;
-    margin-top:12px;
-  }
-
-  button.submit:hover {
-    background:#00cccc;
-    transform:scale(1.07);
-  }
-
-  footer {
-    background:#0d0d0d;
-    color:#ccc;
-    text-align:center;
-    padding:25px;
-    border-top:1px solid #222;
-    margin-top:40px;
-    position:relative;
-  }
-
-  @keyframes neonGlow {
-    0% { text-shadow:0 0 6px #00ffff, 0 0 10px #00ffff; color:#0ff; }
-    50% { text-shadow:0 0 15px #00ffcc, 0 0 30px #00ffff; color:#00ffee; }
-    100% { text-shadow:0 0 6px #00ffff, 0 0 10px #00ffff; color:#0ff; }
-  }
-
-  .neon {animation:neonGlow 3s infinite ease-in-out; font-weight:600;}
-  footer p {margin:6px 0;font-size:14px;}
-
-  @keyframes fadeIn {
-    from {opacity:0;transform:translateY(10px);}
-    to {opacity:1;transform:translateY(0);}
-  }
-
-  /* modo claro */
-  body.light {
-    background:var(--bg-light);
-    color:var(--text-light);
-  }
-  body.light header, body.light nav {
-    background:#e6f2ff;
-    color:#000;
-    box-shadow:none;
-  }
-  body.light .game-card {
-    background:var(--card-light);
-    color:#000;
-  }
-  body.light input {
-    background:#dfefff;
-    color:#000;
-  }
-  body.light footer {
-    background:#e0ecf7;
-    color:#111;
-  }
-
 </style>
 </head>
 <body>
+<div class="app">
 
-<header>🎮 GbzStore 2.0 - Loja Gamer</header>
+  <!-- SIDEBAR (antigo/dureza visual) -->
+  <aside class="sidebar" role="navigation" aria-label="Menu principal">
+    <div class="logo">
+      <div class="mark">GT</div>
+      <div>
+        <h1>GbzStore</h1>
+        <div class="small-muted">Administrador</div>
+      </div>
+    </div>
 
-<nav>
-  <button onclick="showTab('loja')">🕹️ Loja</button>
-  <button onclick="showTab('enviar')">📤 Enviar Jogo</button>
-  <button id="modeToggle" onclick="toggleMode()">🌙 Modo</button>
-</nav>
+    <nav class="menu" role="menu">
+      <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="nav-btn" data-tab="loja">Loja</button>
+      <button class="nav-btn" data-tab="enviar">Enviar Jogo</button>
+      <button class="nav-btn" data-tab="favoritos">Favoritos</button>
+      <button class="nav-btn" data-tab="reports">Denúncias</button>
+      <button class="nav-btn" data-tab="perfil">Perfil</button>
+      <button class="nav-btn" data-tab="config">Configurações</button>
+    </nav>
 
-<div id="loja" class="content active">
-  <h2>Games Disponíveis</h2>
-  <div id="gameList" class="game-grid"></div>
+    <div class="section-title">Ações rápidas</div>
+    <div class="side-panel">
+      <div class="row" style="justify-content:space-between">
+        <div>Jogos</div><div id="sidebar-count" class="tag">0</div>
+      </div>
+      <div style="margin-top:8px">
+        <button id="btn-refresh" class="btn secondary">Atualizar dados</button>
+        <button id="btn-clear-favs" class="btn ghost" style="float:right">Limpar favoritos</button>
+      </div>
+      <div style="margin-top:10px" class="small-muted">Modo anti-hack: <strong id="anti-status">ativado</strong></div>
+    </div>
+
+    <div style="margin-top:auto">
+      <div class="small-muted" style="margin-bottom:6px">Versão</div>
+      <div class="side-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>GbzStore v2 — Painel</div>
+          <div class="muted">2025</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" role="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="left">
+        <input id="global-search" type="search" placeholder="Pesquisar jogos, tags..." />
+        <select id="sort-select" style="margin-left:8px;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit">
+          <option value="newest">Mais recentes</option>
+          <option value="name">Nome A→Z</option>
+        </select>
+        <button id="open-stats" class="btn secondary" style="margin-left:8px">Ver Estatísticas</button>
+      </div>
+      <div class="right">
+        <button id="open-favs" class="btn ghost">Favoritos (<span id="fav-count">0</span>)</button>
+        <button id="open-report" class="btn ghost">Denunciar</button>
+      </div>
+    </div>
+
+    <!-- TABS / VIEWS -->
+    <section id="dashboard" class="view">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1">
+          <h2 style="margin:0 0 8px 0">Painel</h2>
+          <div class="notice">Painel principal — aqui você vê resumo dos jogos e acessa ações principais.</div>
+        </div>
+        <div style="width:320px">
+          <div class="side-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong>Total de jogos</strong></div>
+              <div id="total-games" class="num">0</div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button id="btn-export" class="btn secondary">Exportar JSON</button>
+              <button id="btn-purge" class="btn ghost" title="Apaga todos os jogos (use com cuidado)">Purgar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px" class="stats">
+        <div class="stat">
+          <div class="muted">Jogos publicados</div>
+          <div id="stat-published" class="num">0</div>
+        </div>
+        <div class="stat">
+          <div class="muted">Denúncias</div>
+          <div id="stat-reports" class="num">0</div>
+        </div>
+        <div class="stat">
+          <div class="muted">Favoritos salvos</div>
+          <div id="stat-favs" class="num">0</div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <h3 style="margin:6px 0">Últimos jogos</h3>
+        <div id="recent-grid" class="grid"></div>
+      </div>
+    </section>
+
+    <section id="loja" class="view" style="display:none">
+      <h2>Loja — catálogo</h2>
+      <div id="catalog" class="grid"></div>
+      <div id="empty" class="card muted" style="display:none">Nenhum jogo encontrado.</div>
+    </section>
+
+    <section id="enviar" class="view" style="display:none">
+      <h2>Enviar Jogo</h2>
+      <div class="card">
+        <label>Nome do jogo</label>
+        <input id="g-name" type="text" placeholder="Nome">
+
+        <label>Descrição curta</label>
+        <input id="g-desc" type="text" placeholder="Descrição (opcional)">
+
+        <label>URL da imagem (thumbnail)</label>
+        <input id="g-img" type="url" placeholder="https://.../thumb.jpg" oninput="previewSendImage()">
+
+        <label>Regular tamanho da imagem (px altura)</label>
+        <div class="row">
+          <input id="g-img-height" type="number" min="80" max="600" value="160" style="width:110px"/>
+          <button id="use-default-thumb" class="btn ghost">Usar placeholder</button>
+          <div class="small-muted" style="margin-left:8px">Altura em px usada ao renderizar</div>
+        </div>
+
+        <img id="g-img-preview" src="" style="display:none;width:220px;border-radius:6px;margin-top:8px"/>
+
+        <label>Link do jogo / download</label>
+        <input id="g-link" type="url" placeholder="https://...">
+
+        <label>Tag</label>
+        <input id="g-tag" type="text" placeholder="ex: rpg, indie">
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="btn-send" class="btn">Enviar</button>
+          <button id="btn-clear" class="btn secondary">Limpar</button>
+          <button id="btn-validate" class="btn ghost">Validar link</button>
+        </div>
+        <div id="send-msg" class="small-muted" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <section id="favoritos" class="view" style="display:none">
+      <h2>Favoritos</h2>
+      <div id="fav-grid" class="grid"></div>
+    </section>
+
+    <section id="reports" class="view" style="display:none">
+      <h2>Denúncias</h2>
+      <div style="margin-bottom:8px" class="small-muted">Veja e modere denúncias enviadas por usuários.</div>
+      <div id="reports-list" class="grid"></div>
+    </section>
+
+    <section id="perfil" class="view" style="display:none">
+      <h2>Perfil</h2>
+      <div class="card">
+        <label>Nome</label>
+        <input id="profile-name" type="text" placeholder="Seu nome">
+        <label>Email</label>
+        <input id="profile-email" type="email" placeholder="seu@exemplo.com">
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="btn-save-profile" class="btn">Salvar perfil</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="config" class="view" style="display:none">
+      <h2>Configurações</h2>
+      <div class="card">
+        <label>Permitir uploads públicos</label>
+        <select id="setting-allow-uploads"><option value="true">Sim</option><option value="false">Não</option></select>
+        <label style="margin-top:8px">Detectar DevTools (anti-hack)</label>
+        <select id="setting-detect-devtools"><option value="true">Ativar</option><option value="false">Desativar</option></select>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button id="btn-save-settings" class="btn">Salvar</button>
+          <button id="btn-fetch-settings" class="btn secondary">Recarregar</button>
+        </div>
+        <div class="small-muted" style="margin-top:10px">Observação: regras seguras devem ser aplicadas no Firebase. Este painel aplica apenas controles client-side.</div>
+      </div>
+    </section>
+
+  </main>
 </div>
 
-<div id="enviar" class="content">
-  <h2>Enviar Novo Game</h2>
-  <input id="nome" placeholder="Nome do jogo">
-  <input id="imagem" placeholder="URL da imagem" oninput="previewImage()">
-  
-  <label for="slider">Altura da Imagem: <span id="sliderValue">180</span>px</label>
-  <input type="range" id="slider" min="100" max="400" value="180" oninput="updateImageHeight()">
-  
-  <img id="previewImg" src="" alt="Prévia do jogo">
-
-  <input id="link" placeholder="Link do game/download">
-  <button class="submit" onclick="enviarJogo()">🚀 Enviar</button>
+<!-- MODALS -->
+<div id="modal-report" class="modal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <h3>Enviar denúncia</h3>
+    <label>Link do jogo / ID</label>
+    <input id="r-link" type="text"/>
+    <label>Motivo</label>
+    <textarea id="r-reason"></textarea>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="r-cancel" class="btn secondary">Cancelar</button>
+      <button id="r-send" class="btn">Enviar denúncia</button>
+    </div>
+    <div id="r-msg" class="small-muted" style="margin-top:8px"></div>
+  </div>
 </div>
 
-<footer>
-  <p>© 2025 <strong>GbzStore</strong> — Todos os direitos reservados.</p>
-  <p>Desenvolvido por <span class="neon">GbzinStudio</span> | Powered by Firebase</p>
-</footer>
-
+<!-- SCRIPTS -->
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBfUH7E-il5iOttjtHKqrqiYsFAmNt9d5s",
-    authDomain: "booyahmind.firebaseapp.com",
-    databaseURL: "https://booyahmind-default-rtdb.firebaseio.com",
-    projectId: "booyahmind",
-    storageBucket: "booyahmind.firebasestorage.app",
-    messagingSenderId: "893667760259",
-    appId: "1:893667760259:web:4796b60789ed9916b0a3b6"
+/* =========================
+   CONFIGURAÇÃO FIREBASE
+   ========================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBfUH7E-il5iOttjtHKqrqiYsFAmNt9d5s",
+  authDomain: "booyahmind.firebaseapp.com",
+  databaseURL: "https://booyahmind-default-rtdb.firebaseio.com",
+  projectId: "booyahmind",
+  storageBucket: "booyahmind.firebasestorage.app",
+  messagingSenderId: "893667760259",
+  appId: "1:893667760259:web:4796b60789ed9916b0a3b6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* =========================
+   STATE + HELPERS
+   ========================= */
+let gamesCache = []; // local cache of games
+const GAMES_PATH = 'games';
+const REPORTS_PATH = 'reports';
+const SETTINGS_PATH = 'settings';
+const PROFILE_PATH = 'profile';
+
+// DOM helpers
+const qs = s => document.querySelector(s);
+const qsa = s => Array.from(document.querySelectorAll(s));
+const el = (t,c,html)=>{const e=document.createElement(t);if(c) e.className=c; if(html!==undefined) e.innerHTML=html; return e;};
+
+// basic sanitizers (client-side)
+function sanitizeText(str){
+  if(!str) return '';
+  return String(str).replace(/<script.*?>.*?<\/script>/gi,'').replace(/<\/?[^>]+(>|$)/g,"").trim();
+}
+function isValidUrl(u){
+  try{ const url = new URL(u); return ['http:','https:'].includes(url.protocol); }catch(e){return false;}
+}
+
+/* =========================
+   UI: tab/navigation
+   ========================= */
+qsa('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', e=>{
+    qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.getAttribute('data-tab');
+    qsa('.view').forEach(v=>v.style.display='none');
+    const view = document.getElementById(tab);
+    if(view) view.style.display = 'block';
+    // minor UX: scroll to top
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+
+/* =========================
+   RENDER: catalog cards
+   ========================= */
+function placeholderSVG(text){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='450'><rect width='100%' height='100%' fill='#071626'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#9fd3e6' font-size='28' font-family='Arial'>${text}</text></svg>`;
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+}
+
+function renderCatalog(list){
+  const catalog = qs('#catalog');
+  const recent = qs('#recent-grid');
+  const empty = qs('#empty');
+  catalog.innerHTML = ''; recent.innerHTML = '';
+  if(!list || list.length===0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+  }
+  list.forEach(item=>{
+    const h = item.ts || 0;
+    const height = item.height || 160;
+    const card = el('div','card');
+    const thumb = el('div','thumb');
+    const img = document.createElement('img');
+    img.alt = item.name || 'thumb';
+    img.src = (item.img && isValidUrl(item.img)) ? item.img : placeholderSVG(item.name || 'Game');
+    img.style.height = (height)+'px';
+    thumb.appendChild(img);
+    const title = el('div','title', sanitizeText(item.name || '—'));
+    const desc = el('div','meta', sanitizeText(item.desc || item.tag || ''));
+    const bottom = el('div','row');
+    const linkBtn = el('button','btn ghost','Abrir');
+    linkBtn.addEventListener('click', ()=> window.open(item.link || '#','_blank'));
+    const favBtn = el('button','btn secondary','♥');
+    favBtn.title = 'Favoritar';
+    favBtn.addEventListener('click', ()=> toggleFavorite(item.id));
+    const reportBtn = el('button','btn ghost','Denunciar');
+    reportBtn.addEventListener('click', ()=> openReportModal(item.id, item.link));
+    bottom.appendChild(linkBtn); bottom.appendChild(favBtn); bottom.appendChild(reportBtn);
+
+    card.appendChild(thumb);
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(bottom);
+
+    catalog.appendChild(card);
+
+    // recent list (smaller card)
+    const rcard = card.cloneNode(true);
+    recent.appendChild(rcard);
+  });
+  qs('#sidebar-count').textContent = list.length;
+  qs('#total-games').textContent = list.length;
+  qs('#stat-published').textContent = list.length;
+}
+
+/* =========================
+   FAVORITES (localStorage)
+   ========================= */
+function getFavorites(){
+  try{ const s = localStorage.getItem('gbz_favs'); return s ? JSON.parse(s) : []; }catch(e){return [];}
+}
+function saveFavorites(arr){ localStorage.setItem('gbz_favs', JSON.stringify(arr)); qs('#fav-count').textContent = arr.length; qs('#stat-favs').textContent = arr.length;}
+function toggleFavorite(id){
+  if(!id) return;
+  let favs = getFavorites();
+  if(favs.includes(id)){
+    favs = favs.filter(x=>x!==id);
+  } else {
+    favs.push(id);
+  }
+  saveFavorites(favs); renderFavorites();
+}
+function renderFavorites(){
+  const favGrid = qs('#fav-grid');
+  favGrid.innerHTML = '';
+  const favs = getFavorites();
+  qs('#fav-count').textContent = favs.length;
+  qs('#stat-favs').textContent = favs.length;
+  favs.forEach(fid=>{
+    const item = gamesCache.find(g=>g.id===fid);
+    if(!item) return;
+    const card = el('div','card');
+    const thumb = el('div','thumb');
+    const img = document.createElement('img');
+    img.src = item.img || placeholderSVG(item.name || 'Game');
+    img.style.height = (item.height || 160)+'px';
+    thumb.appendChild(img);
+    const title = el('div','title',item.name);
+    const open = el('button','btn','Abrir');
+    open.addEventListener('click', ()=> window.open(item.link || '#','_blank'));
+    const remove = el('button','btn ghost','Remover');
+    remove.addEventListener('click', ()=> { toggleFavorite(item.id); });
+    card.append(thumb, title, open, remove);
+    favGrid.appendChild(card);
+  });
+}
+
+/* =========================
+   REPORTS (write to Firebase)
+   ========================= */
+function openReportModal(id, link){
+  qs('#modal-report').classList.add('open');
+  qs('#modal-report').setAttribute('aria-hidden','false');
+  qs('#r-link').value = link || id || '';
+  qs('#r-reason').value = '';
+  qs('#r-msg').textContent = '';
+}
+qs('#r-cancel').addEventListener('click', ()=>{
+  qs('#modal-report').classList.remove('open');
+  qs('#modal-report').setAttribute('aria-hidden','true');
+});
+qs('#r-send').addEventListener('click', ()=>{
+  const link = sanitizeText(qs('#r-link').value);
+  const reason = sanitizeText(qs('#r-reason').value);
+  if(!link || !reason) { qs('#r-msg').textContent = 'Preencha link e motivo.'; return; }
+  const payload = { link, reason, ts: Date.now(), resolved: false };
+  db.ref(REPORTS_PATH).push(payload).then(()=>{
+    qs('#r-msg').textContent = 'Denúncia enviada.';
+    setTimeout(()=>{ qs('#modal-report').classList.remove('open'); qs('#modal-report').setAttribute('aria-hidden','true'); }, 1000);
+  }).catch(err=>{
+    console.error(err); qs('#r-msg').textContent = 'Erro ao enviar denúncia.';
+  });
+});
+
+/* =========================
+   SEND GAME (with validation)
+   ========================= */
+qs('#btn-send').addEventListener('click', async ()=>{
+  const name = sanitizeText(qs('#g-name').value);
+  const desc = sanitizeText(qs('#g-desc').value);
+  const img = qs('#g-img').value.trim();
+  const link = qs('#g-link').value.trim();
+  const tag = sanitizeText(qs('#g-tag').value);
+  const height = Number(qs('#g-img-height').value) || 160;
+
+  // client-side permission check (settings read from DB)
+  const allow = window._settings && window._settings.allowUploads===false ? false : true;
+  if(!allow){ qs('#send-msg').textContent = 'Uploads públicos estão desabilitados pelo administrador.'; return; }
+
+  if(!name || !link){ qs('#send-msg').textContent = 'Preencha nome e link.'; return; }
+  // basic URL check
+  if(!isValidUrl(link)){ qs('#send-msg').textContent = 'Link inválido.'; return; }
+  if(img && !isValidUrl(img)){ qs('#send-msg').textContent = 'URL da imagem inválida.'; return; }
+
+  // extra check: prevent obviously malicious inputs
+  if(name.length>150 || desc.length>400){ qs('#send-msg').textContent = 'Texto muito longo.'; return; }
+
+  // payload with simple client signature (timestamp + client fingerprint) - not cryptographically secure
+  const payload = {
+    name, desc, img: img || '', link, tag: tag || '', height, ts: Date.now(),
+    meta: { client: navigator.userAgent, tzOffset: new Date().getTimezoneOffset() }
   };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
 
-  function showTab(tab) {
-    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-    document.getElementById(tab).classList.add('active');
+  qs('#send-msg').textContent = 'Enviando...';
+  try{
+    // push to firebase
+    await db.ref(GAMES_PATH).push(payload);
+    qs('#send-msg').textContent = 'Jogo enviado com sucesso.';
+    qs('#g-name').value=''; qs('#g-desc').value=''; qs('#g-img').value=''; qs('#g-link').value=''; qs('#g-tag').value=''; qs('#g-img-preview').style.display='none';
+    // reload intentionally handled by DB listener
+  }catch(err){
+    console.error(err);
+    qs('#send-msg').textContent = 'Erro ao enviar. Veja console.';
   }
+});
 
-  function enviarJogo() {
-    const nome = document.getElementById('nome').value;
-    const imagem = document.getElementById('imagem').value;
-    const link = document.getElementById('link').value;
-    const altura = document.getElementById('slider').value;
-    if (!nome || !imagem || !link) return alert('⚠️ Preencha todos os campos!');
+/* preview image for send form */
+function previewSendImage(){
+  const url = qs('#g-img').value.trim();
+  const img = qs('#g-img-preview');
+  if(url && isValidUrl(url)){ img.src = url; img.style.display='block'; } else { img.style.display='none'; }
+}
+qs('#use-default-thumb').addEventListener('click', ()=>{
+  qs('#g-img').value = '';
+  qs('#g-img-preview').style.display='none';
+});
 
-    db.ref('games').push({ nome, imagem, link, altura });
-    alert('✅ Jogo enviado com sucesso!');
-    document.getElementById('nome').value = '';
-    document.getElementById('imagem').value = '';
-    document.getElementById('link').value = '';
-    document.getElementById('previewImg').style.display = 'none';
+/* validate link (simple HEAD fetch) */
+qs('#btn-validate').addEventListener('click', async ()=>{
+  const link = qs('#g-link').value.trim();
+  if(!isValidUrl(link)) { qs('#send-msg').textContent = 'Link inválido.'; return; }
+  qs('#send-msg').textContent = 'Validando (checagem básica)...';
+  try{
+    // try to fetch headers — many servers block CORS so this is best-effort
+    const res = await fetch(link, { method:'HEAD', mode:'no-cors' });
+    qs('#send-msg').textContent = 'Validação feita (não conclusiva por restrições CORS).';
+  }catch(e){
+    qs('#send-msg').textContent = 'Não foi possível validar (CORS / bloqueado).';
   }
+});
 
-  function previewImage() {
-    const url = document.getElementById('imagem').value;
-    const preview = document.getElementById('previewImg');
-    if (url) {
-      preview.src = url;
-      preview.style.display = 'block';
-    } else {
-      preview.style.display = 'none';
-    }
-  }
+/* =========================
+   DB LISTENERS: games, reports, settings
+   ========================= */
+function setupDbListeners(){
+  // games (realtime)
+  db.ref(GAMES_PATH).on('value', snapshot=>{
+    const val = snapshot.val() || {};
+    gamesCache = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
+    // ensure consistent fields
+    gamesCache = gamesCache.map(g=>({
+      id: g.id,
+      name: g.name || g.nome || '',
+      desc: g.desc || '',
+      img: g.img || g.imagem || '',
+      link: g.link || g.link || g.url || '',
+      tag: g.tag || '',
+      height: g.height || g.altura || g.h || g.height || g.height || g.height || g.height || g.height || (g.ts ? 160 : 160),
+      ts: g.ts || Date.now()
+    }));
+    // sort by timestamp desc
+    gamesCache.sort((a,b)=> (b.ts||0) - (a.ts||0));
+    renderCatalog(gamesCache);
+    renderFavorites();
+    // stats
+    qs('#stat-published').textContent = gamesCache.length;
+    qs('#total-games').textContent = gamesCache.length;
+  });
 
-  function updateImageHeight() {
-    const value = document.getElementById('slider').value;
-    document.getElementById('sliderValue').textContent = value;
-    document.documentElement.style.setProperty('--img-height', value + 'px');
-  }
-
-  function toggleMode() {
-    document.body.classList.toggle('light');
-  }
-
-  db.ref('games').on('value', snapshot => {
-    const gameList = document.getElementById('gameList');
-    gameList.innerHTML = '';
-    snapshot.forEach(child => {
-      const game = child.val();
-      const card = document.createElement('div');
-      card.className = 'game-card';
-      card.innerHTML = `
-        <img src="${game.imagem}" alt="${game.nome}" style="height:${game.altura || 180}px;">
-        <h3>${game.nome}</h3>
-        <a href="${game.link}" target="_blank">
-          <button class='submit'>🎮 Jogar</button>
-        </a>
-      `;
-      gameList.appendChild(card);
+  // reports
+  db.ref(REPORTS_PATH).on('value', snap=>{
+    const val = snap.val() || {};
+    const arr = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
+    qs('#stat-reports').textContent = arr.length;
+    const reportsList = qs('#reports-list');
+    reportsList.innerHTML = '';
+    if(arr.length===0){ reportsList.innerHTML = '<div class="card muted">Sem denúncias</div>'; return; }
+    arr.forEach(r=>{
+      const card = el('div','card');
+      const link = el('div','meta', 'Link: '+sanitizeText(r.link || '—'));
+      const reason = el('div','muted','Motivo: '+sanitizeText(r.reason || '—'));
+      const ts = el('div','small-muted', new Date(r.ts||0).toLocaleString());
+      const btns = el('div','row');
+      const resolve = el('button','btn secondary','Marcar como resolvido');
+      resolve.addEventListener('click', ()=> {
+        db.ref(REPORTS_PATH+'/'+r.id).update({ resolved: true, resolvedTs: Date.now() });
+      });
+      btns.appendChild(resolve);
+      card.append(link, reason, ts, btns);
+      reportsList.appendChild(card);
     });
   });
-</script>
 
+  // settings (read + keep local)
+  db.ref(SETTINGS_PATH).once('value').then(snap=>{
+    const settings = snap.val() || {};
+    window._settings = settings;
+    // reflect in UI
+    qs('#setting-allow-uploads').value = (settings.allowUploads===false) ? 'false' : 'true';
+    qs('#setting-detect-devtools').value = (settings.detectDevtools===false) ? 'false' : 'true';
+  }).catch(err=>console.warn('settings fetch failed', err));
+}
+
+qs('#btn-fetch-settings').addEventListener('click', ()=>{
+  db.ref(SETTINGS_PATH).once('value').then(snap=>{
+    window._settings = snap.val() || {};
+    qs('#send-msg').textContent = 'Configurações recarregadas.';
+  });
+});
+qs('#btn-save-settings').addEventListener('click', ()=>{
+  const allow = qs('#setting-allow-uploads').value === 'true';
+  const detect = qs('#setting-detect-devtools').value === 'true';
+  db.ref(SETTINGS_PATH).set({ allowUploads: allow, detectDevtools: detect })
+    .then(()=> { qs('#send-msg').textContent = 'Configurações salvas.'; window._settings = { allowUploads: allow, detectDevtools: detect }; })
+    .catch(err=>{ console.error(err); qs('#send-msg').textContent = 'Erro ao salvar configurações.'; });
+});
+
+/* =========================
+   BUTTONS / ACTIONS
+   ========================= */
+qs('#btn-refresh').addEventListener('click', ()=> { qs('#send-msg').textContent = 'Atualizando...'; /* DB listener auto updates */ setTimeout(()=>qs('#send-msg').textContent='Pronto',800); });
+
+qs('#btn-clear-favs').addEventListener('click', ()=> { localStorage.removeItem('gbz_favs'); renderFavorites(); });
+
+qs('#btn-export').addEventListener('click', ()=>{
+  const data = JSON.stringify(gamesCache, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'gbz-games-export.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+qs('#btn-purge').addEventListener('click', ()=>{
+  if(!confirm('Tem certeza? Isso apagará todos os jogos do banco.')) return;
+  db.ref(GAMES_PATH).set(null).then(()=> alert('Todos os jogos foram apagados (db).'));
+});
+
+/* PROFILE */
+qs('#btn-save-profile').addEventListener('click', ()=>{
+  const name = sanitizeText(qs('#profile-name').value);
+  const email = sanitizeText(qs('#profile-email').value);
+  db.ref(PROFILE_PATH).set({name,email,ts:Date.now()}).then(()=> alert('Perfil salvo.'));
+});
+
+/* search & sort */
+qs('#global-search').addEventListener('input', applyFilters);
+qs('#sort-select').addEventListener('change', applyFilters);
+
+function applyFilters(){
+  const q = qs('#global-search').value.trim().toLowerCase();
+  let list = gamesCache.slice();
+  if(q){
+    list = list.filter(i => (i.name && i.name.toLowerCase().includes(q)) || (i.tag && i.tag.toLowerCase().includes(q)) || (i.desc && i.desc.toLowerCase().includes(q)));
+  }
+  const sort = qs('#sort-select').value;
+  if(sort === 'name') list.sort((a,b)=> (a.name||'').localeCompare(b.name||'','pt-BR'));
+  else list.sort((a,b)=> (b.ts||0) - (a.ts||0));
+  renderCatalog(list);
+}
+
+/* render initial favorites count */
+saveFavorites(getFavorites());
+
+/* =========================
+   BASIC ANTI-HACK / INTEGRITY DETECTIONS
+   (Client-side: detect DevTools, detect DOM mutation, integrity hash)
+   ========================= */
+
+/* 1) detect DevTools open (approx.) */
+let devtoolsOpen = false;
+function detectDevTools(){
+  // technique: measure time to execute debugger statement or check window dimensions
+  const threshold = 160;
+  const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+  const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+  devtoolsOpen = widthThreshold || heightThreshold;
+  // also use performance timing trick
+  try{
+    const start = performance.now();
+    debugger; // note: in many browsers this triggers only if DevTools open
+    const elapsed = performance.now() - start;
+    if(elapsed > 100) devtoolsOpen = true;
+  }catch(e){}
+  // reflect status
+  qs('#anti-status').textContent = (devtoolsOpen ? 'detectado' : 'ativado');
+  // if detected and server setting enforces action, warn & lock UI
+  if(devtoolsOpen && window._settings && window._settings.detectDevtools!==false){
+    // disable send button and show big notice
+    if(qs('#btn-send')) qs('#btn-send').disabled = true;
+    if(!document.getElementById('dev-warning')){
+      const w = el('div','sheet','<div style="color:var(--danger);font-weight:800">Detectamos que o DevTools está aberto. Ações sensíveis foram bloqueadas.</div>');
+      w.id = 'dev-warning';
+      document.body.appendChild(w);
+      setTimeout(()=>{ if(w.parentNode) w.parentNode.removeChild(w); }, 6000);
+    }
+  } else {
+    if(qs('#btn-send')) qs('#btn-send').disabled = false;
+  }
+}
+setInterval(detectDevTools, 1500);
+
+/* 2) DOM mutation detector (watch for script tampering) */
+const originalHTML = document.documentElement.innerHTML.slice(0, 4000); // sample
+const mo = new MutationObserver(muts=>{
+  for(const m of muts){
+    // if someone injected a script node into head or changed critical nodes, take action
+    if(m.addedNodes && m.addedNodes.length){
+      for(const n of m.addedNodes){
+        if(n.tagName && n.tagName.toLowerCase()==='script'){
+          console.warn('Script injection detected', n);
+          // send a log to firebase bug log (best-effort)
+          db.ref('intrusions').push({type:'script-inject', html: (n.src || n.innerText||'inline'), ts: Date.now(), ua: navigator.userAgent});
+          // remove node
+          try{ n.parentNode.removeChild(n); }catch(e){}
+        }
+      }
+    }
+  }
+});
+mo.observe(document.documentElement, {childList:true, subtree:true});
+
+/* 3) periodic integrity check (not secure, but raises flag) */
+function performIntegrityCheck(){
+  try{
+    const current = document.documentElement.innerHTML.slice(0, 4000);
+    if(current !== originalHTML.slice(0,4000)){
+      console.warn('Document snapshot changed (integrity mismatch)');
+      db.ref('intrusions').push({type:'integrity-mismatch', ts: Date.now(), ua: navigator.userAgent});
+    }
+  }catch(e){}
+}
+setInterval(performIntegrityCheck, 10000);
+
+/* add handler to disable basic bad actions (prevent easy console override) */
+(function disableEasyTampering(){
+  // override console.warn to capture tampering attempts
+  const origWarn = console.warn;
+  console.warn = function(...args){
+    origWarn.apply(console, args);
+    db.ref('intrusions').push({type:'console-warn', payload: String(args).slice(0,500), ts: Date.now()});
+  };
+})();
+
+/* =========================
+   INIT
+   ========================= */
+setupDbListeners();
+applyFilters();
+
+/* small helpers on load */
+window.addEventListener('load', ()=> {
+  // button actions for report & fav quick open
+  qs('#open-report').addEventListener('click', ()=> openReportModal());
+  qs('#open-favs').addEventListener('click', ()=> {
+    qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
+    qsa('.nav-btn[data-tab="favoritos"]').forEach(b=>b.classList.add('active'));
+    qsa('.view').forEach(v=>v.style.display='none');
+    qs('#favoritos').style.display='block';
+    renderFavorites();
+  });
+});
+
+/* =========================
+   Small UX utils
+   ========================= */
+function toggleFavoriteUI(id){
+  // updates count in UI (already done by saveFavorites)
+  const arr = getFavorites();
+  qs('#fav-count').textContent = arr.length;
+}
+
+/* =========================
+   Final note: server-side rules suggestion (copy to Firebase Console)
+   - Below is a minimal Realtime Database rules example you should set (NOT for production).
+   - Replace with stricter rules (auth required for destructive ops).
+   ========================= */
+
+console.log(`==== SUGESTÃO DE REGRAS (Realtime Database) ====
+{
+  \"rules\": {
+    \"games\": {
+      \".read\": true,
+      \".write\": true
+    },
+    \"reports\": {
+      \".read\": true,
+      \".write\": true
+    },
+    \"settings\": {
+      \".read\": true,
+      \".write\": \"auth != null\"   // recomenda-se que apenas admin autenticado altere settings
+    },
+    \"intrusions\": {
+      \".read\": false,
+      \".write\": true
+    }
+  }
+}
+====================================================`);
+
+</script>
 </body>
 </html>
