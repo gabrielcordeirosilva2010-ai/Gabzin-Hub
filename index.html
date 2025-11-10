@@ -39,7 +39,9 @@
   nav.menu{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
   button.nav-btn{
     background:transparent;border:1px solid transparent;padding:10px 12px;border-radius:8px;color:var(--muted);text-align:left;cursor:pointer;font-weight:700;
+    transition:all .14s ease;
   }
+  button.nav-btn:hover{transform:translateX(4px)}
   button.nav-btn.active{background:var(--glass);border-color:var(--border);color:#fff}
   .sidebar .section-title{font-size:12px;color:var(--muted);margin-top:8px;margin-bottom:6px}
   .sidebar .small{font-size:12px;color:var(--muted)}
@@ -54,13 +56,15 @@
   .card{
     background:linear-gradient(180deg,var(--card),rgba(255,255,255,0.01));
     padding:12px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
   }
   .thumb{height:160px;border-radius:8px;background:#081522;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .thumb img{width:100%;height:100%;object-fit:cover}
   .title{font-weight:800}
   .meta{font-size:13px;color:var(--muted)}
   .row{display:flex;gap:8px;align-items:center}
-  .btn{padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#071018;font-weight:800;cursor:pointer}
+  .btn{padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#071018;font-weight:800;cursor:pointer;transition:transform .12s ease}
+  .btn:active{transform:scale(.98)}
   .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:700}
   .btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--muted)}
   .muted{color:var(--muted)}
@@ -68,7 +72,9 @@
   .side-panel{padding:12px;border-radius:8px;background:linear-gradient(180deg,transparent,rgba(255,255,255,0.01));border:1px solid var(--border)}
   /* Forms */
   label{font-size:13px;color:var(--muted);display:block;margin-top:8px}
-  input[type=text], input[type=url], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit}
+  input[type=text], input[type=url], textarea, select, input[type=number], input[type=email]{
+    width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit;
+  }
   textarea{min-height:80px;resize:vertical}
   .small-muted{font-size:12px;color:var(--muted)}
   /* Modals */
@@ -82,6 +88,9 @@
   /* small utilities */
   .tag{padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
   .notice{padding:8px;border-radius:8px;background:#081624;border:1px solid rgba(255,255,255,0.02);color:var(--muted)}
+  /* helpers */
+  .flex-right{display:flex;justify-content:flex-end;gap:8px}
+  .muted-pill{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
   /* responsive */
   @media (max-width:980px){
     aside.sidebar{position:relative;width:100%;display:flex;flex-direction:row;overflow:auto;height:auto;padding:10px}
@@ -109,7 +118,7 @@
       <button class="nav-btn" data-tab="enviar">Enviar Jogo</button>
       <button class="nav-btn" data-tab="favoritos">Favoritos</button>
       <button class="nav-btn" data-tab="reports">Denúncias</button>
-      <button class="nav-btn" data-tab="perfil">Perfil</button>
+      <button class="nav-btn" data-tab="users">Gerenciar Usuários</button>
       <button class="nav-btn" data-tab="config">Configurações</button>
     </nav>
 
@@ -169,7 +178,7 @@
             </div>
             <div style="margin-top:10px;display:flex;gap:8px">
               <button id="btn-export" class="btn secondary">Exportar JSON</button>
-              <button id="btn-purge" class="btn ghost" title="Apaga todos os jogos (use com cuidado)">Purgar</button>
+              <!-- PURGE REMOVIDO: botão de apagar todos os jogos foi removido conforme solicitado -->
             </div>
           </div>
         </div>
@@ -249,6 +258,14 @@
       <div id="reports-list" class="grid"></div>
     </section>
 
+    <section id="users" class="view" style="display:none">
+      <h2>Gerenciar Usuários</h2>
+      <div class="card">
+        <div class="small-muted">Lista simples de usuários (vazia até ter dados no DB).</div>
+        <div id="users-list" style="margin-top:12px"></div>
+      </div>
+    </section>
+
     <section id="perfil" class="view" style="display:none">
       <h2>Perfil</h2>
       <div class="card">
@@ -310,7 +327,11 @@ const firebaseConfig = {
   messagingSenderId: "893667760259",
   appId: "1:893667760259:web:4796b60789ed9916b0a3b6"
 };
-firebase.initializeApp(firebaseConfig);
+try {
+  firebase.initializeApp(firebaseConfig);
+} catch(e) {
+  // already initialized
+}
 const db = firebase.database();
 
 /* =========================
@@ -321,6 +342,7 @@ const GAMES_PATH = 'games';
 const REPORTS_PATH = 'reports';
 const SETTINGS_PATH = 'settings';
 const PROFILE_PATH = 'profile';
+const USERS_PATH = 'users';
 
 // DOM helpers
 const qs = s => document.querySelector(s);
@@ -371,7 +393,6 @@ function renderCatalog(list){
     empty.style.display = 'none';
   }
   list.forEach(item=>{
-    const h = item.ts || 0;
     const height = item.height || 160;
     const card = el('div','card');
     const thumb = el('div','thumb');
@@ -399,7 +420,7 @@ function renderCatalog(list){
 
     catalog.appendChild(card);
 
-    // recent list (smaller card)
+    // recent list (smaller copy)
     const rcard = card.cloneNode(true);
     recent.appendChild(rcard);
   });
@@ -537,7 +558,7 @@ qs('#btn-validate').addEventListener('click', async ()=>{
   qs('#send-msg').textContent = 'Validando (checagem básica)...';
   try{
     // try to fetch headers — many servers block CORS so this is best-effort
-    const res = await fetch(link, { method:'HEAD', mode:'no-cors' });
+    await fetch(link, { method:'HEAD', mode:'no-cors' });
     qs('#send-msg').textContent = 'Validação feita (não conclusiva por restrições CORS).';
   }catch(e){
     qs('#send-msg').textContent = 'Não foi possível validar (CORS / bloqueado).';
@@ -545,7 +566,7 @@ qs('#btn-validate').addEventListener('click', async ()=>{
 });
 
 /* =========================
-   DB LISTENERS: games, reports, settings
+   DB LISTENERS: games, reports, settings, users
    ========================= */
 function setupDbListeners(){
   // games (realtime)
@@ -560,7 +581,7 @@ function setupDbListeners(){
       img: g.img || g.imagem || '',
       link: g.link || g.link || g.url || '',
       tag: g.tag || '',
-      height: g.height || g.altura || g.h || g.height || g.height || g.height || g.height || g.height || (g.ts ? 160 : 160),
+      height: g.height || g.altura || g.h || 160,
       ts: g.ts || Date.now()
     }));
     // sort by timestamp desc
@@ -593,6 +614,27 @@ function setupDbListeners(){
       btns.appendChild(resolve);
       card.append(link, reason, ts, btns);
       reportsList.appendChild(card);
+    });
+  });
+
+  // users (simple read-only listing)
+  db.ref(USERS_PATH).on('value', snap=>{
+    const val = snap.val() || {};
+    const arr = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
+    const list = qs('#users-list');
+    list.innerHTML = '';
+    if(arr.length===0){ list.innerHTML = '<div class="small-muted">Sem usuários</div>'; return; }
+    arr.forEach(u=>{
+      const row = el('div','row');
+      const name = el('div','','<strong>'+(sanitizeText(u.name||'—'))+'</strong>');
+      const mail = el('div','small-muted', sanitizeText(u.email||'—'));
+      const btn = el('button','btn ghost','Ver');
+      btn.addEventListener('click', ()=> alert(`Usuário: ${u.name}\nEmail: ${u.email}`));
+      row.style.justifyContent = 'space-between';
+      row.appendChild(name);
+      row.appendChild(mail);
+      row.appendChild(btn);
+      list.appendChild(row);
     });
   });
 
@@ -635,10 +677,7 @@ qs('#btn-export').addEventListener('click', ()=>{
   URL.revokeObjectURL(url);
 });
 
-qs('#btn-purge').addEventListener('click', ()=>{
-  if(!confirm('Tem certeza? Isso apagará todos os jogos do banco.')) return;
-  db.ref(GAMES_PATH).set(null).then(()=> alert('Todos os jogos foram apagados (db).'));
-});
+/* NOTE: botão "Purgar" e seu handler foram removidos conforme solicitado. */
 
 /* PROFILE */
 qs('#btn-save-profile').addEventListener('click', ()=>{
@@ -714,7 +753,7 @@ const mo = new MutationObserver(muts=>{
         if(n.tagName && n.tagName.toLowerCase()==='script'){
           console.warn('Script injection detected', n);
           // send a log to firebase bug log (best-effort)
-          db.ref('intrusions').push({type:'script-inject', html: (n.src || n.innerText||'inline'), ts: Date.now(), ua: navigator.userAgent});
+          try{ db.ref('intrusions').push({type:'script-inject', html: (n.src || n.innerText||'inline'), ts: Date.now(), ua: navigator.userAgent}); }catch(e){}
           // remove node
           try{ n.parentNode.removeChild(n); }catch(e){}
         }
@@ -730,7 +769,7 @@ function performIntegrityCheck(){
     const current = document.documentElement.innerHTML.slice(0, 4000);
     if(current !== originalHTML.slice(0,4000)){
       console.warn('Document snapshot changed (integrity mismatch)');
-      db.ref('intrusions').push({type:'integrity-mismatch', ts: Date.now(), ua: navigator.userAgent});
+      try{ db.ref('intrusions').push({type:'integrity-mismatch', ts: Date.now(), ua: navigator.userAgent}); }catch(e){}
     }
   }catch(e){}
 }
@@ -742,7 +781,7 @@ setInterval(performIntegrityCheck, 10000);
   const origWarn = console.warn;
   console.warn = function(...args){
     origWarn.apply(console, args);
-    db.ref('intrusions').push({type:'console-warn', payload: String(args).slice(0,500), ts: Date.now()});
+    try{ db.ref('intrusions').push({type:'console-warn', payload: String(args).slice(0,500), ts: Date.now()}); }catch(e){}
   };
 })();
 
@@ -802,7 +841,6 @@ console.log(`==== SUGESTÃO DE REGRAS (Realtime Database) ====
   }
 }
 ====================================================`);
-
 </script>
 </body>
 </html>
