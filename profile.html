@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gbz • Central Futurista — Contatos & Redes</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+/* ===================================================================
+   Gbz • Central Futurista — CSS
+   Arquitetura: organizado em blocos (variáveis, reset, layout, seções)
+   =================================================================== */
+
+/* --------------- VARIÁVEIS DE TEMA --------------- */
+:root{
+  --bg-0: #040406;
+  --bg-1: #0a0b10;
+  --card: rgba(255,255,255,0.03);
+  --glass: rgba(255,255,255,0.03);
+  --muted: #aeb6c1;
+  --accent-a: #00f0ff;   /* neon cyan */
+  --accent-b: #ffa200;   /* neon amber */
+  --accent-c: #a166ff;   /* neon purple */
+  --glass-border: rgba(255,255,255,0.04);
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --fw-heavy: 700;
+  --fw-medium: 600;
+}
+
+/* --------------- RESET --------------- */
+*{box-sizing:border-box}
+html,body{height:100%; margin:0; padding:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#000;}
+a{color:inherit; text-decoration:none}
+button{font-family:inherit}
+
+/* --------------- PAGE BG & PARTICLES CANVAS --------------- */
+body{
+  background: linear-gradient(120deg, #020204 0%, rgba(8,10,20,1) 40%, #0a0410 100%);
+  color:#e8eef6;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;
+}
+
+/* canvas para partículas ocupa todo o fundo, fica atrás do conteúdo */
+#bgCanvas{
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  z-index:0;
+  pointer-events:none;
+}
+
+/* subtle gradient overlay */
+.bg-overlay{
+  position:fixed; inset:0; z-index:1;
+  background: radial-gradient(800px 400px at 10% 10%, rgba(0,240,255,0.03), transparent 8%),
+              radial-gradient(600px 300px at 90% 90%, rgba(161,102,255,0.02), transparent 8%);
+  pointer-events:none;
+}
+
+/* --------------- LAYOUT --------------- */
+.app {
+  position:relative;
+  z-index:2; /* above canvas */
+  max-width:1300px;
+  margin:28px auto 80px auto;
+  padding:24px;
+}
+
+/* header */
+.header {
+  display:flex;
+  gap:18px;
+  align-items:center;
+  margin-bottom:20px;
+}
+.logo {
+  width:84px; height:84px; border-radius:16px;
+  background: linear-gradient(135deg,var(--accent-a),var(--accent-c));
+  display:flex; align-items:center; justify-content:center;
+  font-family:Orbitron; font-weight:700; font-size:20px; color:#051018;
+  box-shadow: 0 10px 40px rgba(0,240,255,0.06), inset 0 -6px 20px rgba(255,255,255,0.03);
+}
+.title {
+  display:flex; flex-direction:column;
+}
+.title h1 { margin:0; font-family:Orbitron; font-size:24px; color:var(--accent-a); text-shadow:0 0 12px rgba(0,240,255,0.12); }
+.title p { margin:4px 0 0 0; color:var(--muted); font-size:13px; }
+
+/* main grid: left column (profile/links) & right column (main content) */
+.main-grid {
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  gap:22px;
+  align-items:start;
+}
+
+/* --------------- LEFT COL (PROFILE & LINKS) --------------- */
+.panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+  padding:18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
+
+/* profile */
+.profile {
+  display:flex; gap:12px; align-items:center;
+  margin-bottom:12px;
+}
+.avatar {
+  width:92px; height:92px; border-radius:14px;
+  background:linear-gradient(135deg,var(--accent-c),var(--accent-a));
+  display:flex; align-items:center; justify-content:center; font-family:Orbitron; font-weight:700; color:#041018; font-size:22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+.profile-info h3 { margin:0; font-size:18px; color:var(--accent-b); font-weight:var(--fw-heavy); }
+.profile-info p { margin:6px 0 0 0; color:var(--muted); font-size:13px; }
+
+/* quick stats */
+.stats { display:flex; gap:8px; margin-top:14px; }
+.stat { flex:1; background:#07070a; border-radius:10px; padding:10px; text-align:center; border:1px solid rgba(255,255,255,0.02); }
+.stat small { display:block; color:var(--muted); font-size:12px; }
+.stat strong { display:block; margin-top:6px; font-size:16px; color:var(--accent-a) }
+
+/* left links list */
+.links-list { margin-top:18px; display:flex; flex-direction:column; gap:10px; }
+.link-item {
+  display:flex; gap:12px; align-items:center; padding:10px; border-radius:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+  border:1px solid rgba(255,255,255,0.02);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.link-item:hover { transform:translateY(-6px); box-shadow:0 12px 30px rgba(0,0,0,0.6); }
+.link-icon { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; background: rgba(0,0,0,0.25); color:var(--accent-a); }
+
+/* --------------- RIGHT COL (CONTENT) --------------- */
+.content-column { display:flex; flex-direction:column; gap:18px; }
+
+/* large hero card */
+.hero {
+  display:flex; gap:20px; align-items:center;
+  padding:22px; border-radius:14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border:1px solid rgba(0,240,255,0.04);
+}
+.hero .left { flex:1; }
+.hero .right { width:240px; text-align:center; }
+
+/* neon tags */
+.tag-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+.tag {
+  padding:8px 10px; border-radius:999px; font-size:12px; font-weight:600;
+  background:linear-gradient(90deg,var(--accent-a),var(--accent-c));
+  color:#041018;
+  box-shadow:0 6px 18px rgba(0,240,255,0.05);
+}
+
+/* sections */
+.section {
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  border-radius:12px; padding:16px; border:1px solid rgba(255,255,255,0.03);
+}
+
+/* socials grid */
+.social-grid { display:flex; gap:12px; flex-wrap:wrap; }
+.social-btn {
+  display:flex; gap:10px; align-items:center; padding:10px 14px; border-radius:12px; cursor:pointer;
+  background:#07070a; border:1px solid rgba(255,255,255,0.02);
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.social-btn:hover { transform:translateY(-6px); box-shadow:0 12px 30px rgba(0,0,0,0.6); }
+
+/* team cards */
+.team-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.team-card { padding:12px; border-radius:10px; background:#0b0b0f; border:1px solid rgba(255,255,255,0.02); text-align:center; }
+.team-avatar { width:84px; height:84px; border-radius:12px; margin:0 auto 10px auto; background:linear-gradient(135deg,var(--accent-b),var(--accent-c)); display:flex; align-items:center; justify-content:center; font-weight:700; color:#041018; }
+
+/* contact form */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-grid .full { grid-column:1/-1; }
+input[type="text"], input[type="email"], textarea {
+  width:100%; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
+  background:rgba(6,6,8,0.6); color:inherit; font-size:14px;
+}
+textarea { min-height:140px; resize:vertical; }
+.btn-primary {
+  padding:12px 18px; border-radius:10px; border:none; cursor:pointer;
+  background:linear-gradient(90deg,var(--accent-a), var(--accent-c));
+  color:#041018; font-weight:700; box-shadow:0 10px 30px rgba(0,240,255,0.06);
+  transform-style:preserve-3d; transition:transform .16s ease;
+}
+.btn-primary:active { transform:translateY(2px) translateZ(0); }
+
+/* 3D button hover effect via pseudo */
+.btn-primary:hover { transform:translateY(-6px) translateZ(6px); box-shadow:0 20px 60px rgba(0,240,255,0.08); }
+
+/* messages panel */
+.messages-panel { max-height:420px; overflow:auto; padding-right:6px; display:flex; flex-direction:column; gap:10px; }
+.message-item { display:flex; gap:12px; align-items:flex-start; padding:10px; border-radius:10px; background:#07070a; border:1px solid rgba(255,255,255,0.02); }
+.message-meta { width:150px; min-width:140px; }
+.message-meta .from { font-weight:700; color:var(--accent-b); }
+.message-meta small { display:block; color:var(--muted); margin-top:6px; font-size:12px; }
+
+/* small UI */
+.kv { font-size:13px; color:var(--muted); }
+.footer {
+  margin-top:24px; text-align:center; color:#8f98a6; font-size:13px;
+}
+
+/* responsive */
+@media (max-width:1000px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .hero .right { width: 180px; }
+  .form-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- PARTICLES CANVAS (fundo) -->
+<canvas id="bgCanvas"></canvas>
+<div class="bg-overlay" aria-hidden="true"></div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">Gbz</div>
+    <div class="title">
+      <h1>Gbz • Central Futurista</h1>
+      <p>Rede de contatos — mensagens em tempo real — design cyber/neon</p>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT COLUMN -->
+    <aside class="panel">
+      <!-- PROFILE -->
+      <div class="profile">
+        <div class="avatar">Gbz</div>
+        <div class="profile-info">
+          <h3>Gbz</h3>
+          <p>Desenvolvedor • Criador • BooyahMind</p>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat">
+          <small>Seguidores</small>
+          <strong>—</strong>
+        </div>
+        <div class="stat">
+          <small>Mensagens</small>
+          <strong id="statMessages">—</strong>
+        </div>
+      </div>
+
+      <!-- LINKS -->
+      <div class="links-list" style="margin-top:18px;">
+        <a class="link-item" href="https://instagram.com/its.gbzin_" target="_blank" rel="noopener">
+          <div class="link-icon">📸</div>
+          <div>
+            <div style="font-weight:700;">Instagram</div>
+            <div style="font-size:13px; color:var(--muted)">@its.gbzin_</div>
+          </div>
+        </a>
+
+        <a class="link-item" href="mailto:gbzin.contatooficial@gmail.com">
+          <div class="link-icon">✉️</div>
+          <div>
+            <div style="font-weight:700;">E-mail</div>
+            <div style="font-size:13px; color:var(--muted)">gbzin.contatooficial@gmail.com</div>
+          </div>
+        </a>
+
+        <a class="link-item" href="https://youtube.com" target="_blank" rel="noopener">
+          <div class="link-icon">▶️</div>
+          <div>
+            <div style="font-weight:700;">YouTube</div>
+            <div style="font-size:13px; color:var(--muted)">Canal</div>
+          </div>
+        </a>
+
+        <!-- DOWNLOAD link atualizado conforme pedido -->
+        <a class="link-item" href="https://gabrielcordeirosilva2010-ai.github.io/Gabzin-Hub/" target="_blank" rel="noopener">
+          <div class="link-icon">💾</div>
+          <div>
+            <div style="font-weight:700;">Downloads</div>
+            <div style="font-size:13px; color:var(--muted)">Gbzin Hub</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- QUICK NOTES -->
+      <div style="margin-top:18px; font-size:13px; color:var(--muted);">
+        <strong>Dica:</strong> Use o formulário no lado direito para enviar mensagens. As mensagens são salvas automaticamente no Firebase.
+      </div>
+    </aside>
+
+    <!-- RIGHT COLUMN -->
+    <div class="content-column">
+
+      <!-- HERO CARD -->
+      <div class="hero section">
+        <div class="left">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="font-family:Orbitron; color:var(--accent-a); font-size:20px;">Painel Interativo</div>
+            <div style="font-size:13px; color:var(--muted);">Interaja, envie mensagens e acompanhe em tempo real.</div>
+          </div>
+
+          <div class="tag-row" style="margin-top:12px;">
+            <div class="tag">Futuro</div>
+            <div class="tag" style="background:linear-gradient(90deg,var(--accent-b),var(--accent-c));">Neon</div>
+            <div class="tag" style="background:linear-gradient(90deg,#9cf,#7ff1ff);">Realtime</div>
+          </div>
+        </div>
+
+        <div class="right">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">Preferência Visual</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button class="btn-primary" id="btnThemeA">Neon</button>
+            <button class="btn-primary" id="btnThemeB" style="background:linear-gradient(90deg,var(--accent-b),#ffd07a)">Amber</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REDES SOCIAIS SECTION -->
+      <div class="section">
+        <h2>Redes Sociais & Links</h2>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
+          <a class="social-btn" href="https://instagram.com/its.gbzin_" target="_blank"><div style="font-size:20px">📸</div><div><strong>Instagram</strong><div class="kv">@its.gbzin_</div></div></a>
+          <a class="social-btn" href="mailto:gbzin.contatooficial@gmail.com"><div style="font-size:20px">✉️</div><div><strong>Email</strong><div class="kv">gbzin.contatooficial@gmail.com</div></div></a>
+          <a class="social-btn" href="https://youtube.com" target="_blank"><div style="font-size:20px">▶️</div><div><strong>YouTube</strong><div class="kv">Canal</div></div></a>
+          <a class="social-btn" href="https://gabrielcordeirosilva2010-ai.github.io/Gabzin-Hub/" target="_blank"><div style="font-size:20px">💾</div><div><strong>Downloads</strong><div class="kv">Gbzin Hub</div></div></a>
+        </div>
+      </div>
+
+      <!-- TEAM / PARTNERS -->
+      <div class="section">
+        <h2>Equipe & Parceiros</h2>
+        <div style="margin-top:12px;" class="team-grid">
+          <div class="team-card">
+            <div class="team-avatar">GB</div>
+            <div style="font-weight:700; margin-bottom:6px;">Gbz</div>
+            <div class="kv">Líder • Desenvolvimento</div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:linear-gradient(135deg,var(--accent-a),#7ff1ff)">DS</div>
+            <div style="font-weight:700; margin-bottom:6px;">Design Studio</div>
+            <div class="kv">UI/UX • Visual</div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:linear-gradient(135deg,var(--accent-b),var(--accent-c))">CM</div>
+            <div style="font-weight:700; margin-bottom:6px;">Comunidade</div>
+            <div class="kv">Moderadores & Criadores</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINKS RÁPIDOS -->
+      <div class="section">
+        <h2>Links Rápidos</h2>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:12px;">
+          <div class="link-box" style="padding:14px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border:1px solid rgba(255,255,255,0.03);">
+            <strong>🎮 Jogos & Mods</strong><div class="kv" style="margin-top:6px">Download e instaladores</div>
+          </div>
+          <div class="link-box" style="padding:14px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border:1px solid rgba(255,255,255,0.03);">
+            <strong>📰 Notícias</strong><div class="kv" style="margin-top:6px">Atualizações do projeto</div>
+          </div>
+          <div class="link-box" style="padding:14px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border:1px solid rgba(255,255,255,0.03);">
+            <strong>💬 Comunidade</strong><div class="kv" style="margin-top:6px">Discord & grupos</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACT FORM + MESSAGES PANEL -->
+      <div style="display:grid; grid-template-columns: 1fr 380px; gap:12px;">
+        <!-- form -->
+        <div class="section">
+          <h2>Envie uma Mensagem</h2>
+          <form id="contactForm" style="margin-top:12px;">
+            <div class="form-grid">
+              <div>
+                <label for="name">Nome</label>
+                <input id="cf_name" type="text" placeholder="Seu nome completo" required>
+              </div>
+              <div>
+                <label for="email">Email</label>
+                <input id="cf_email" type="email" placeholder="seu@email.com" required>
+              </div>
+              <div class="full">
+                <label for="subject">Assunto (opcional)</label>
+                <input id="cf_subject" type="text" placeholder="Assunto">
+              </div>
+              <div class="full">
+                <label for="message">Mensagem</label>
+                <textarea id="cf_message" placeholder="Escreva sua mensagem..." required></textarea>
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:12px; align-items:center;">
+              <button type="submit" class="btn-primary">Enviar Mensagem</button>
+              <button type="button" id="btnClear" style="background:transparent; border:1px solid rgba(255,255,255,0.04); padding:10px 12px; border-radius:10px; color:var(--muted);">Limpar</button>
+            </div>
+
+            <div id="formStatus" style="margin-top:10px; min-height:28px; color:var(--muted);"></div>
+          </form>
+        </div>
+
+        <!-- messages panel -->
+        <aside class="section">
+          <h2>Mensagens (tempo real)</h2>
+          <div style="margin-top:10px; color:var(--muted); font-size:13px;">As mensagens aparecem aqui automaticamente quando são enviadas.</div>
+          <div class="messages-panel" id="messagesPanel" style="margin-top:12px;">
+            <div style="text-align:center; color:var(--muted); padding:18px;">Aguardando mensagens...</div>
+          </div>
+
+          <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+            <button id="btnExport" style="padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:var(--muted);">Exportar CSV</button>
+            <div style="flex:1; text-align:right; color:var(--muted); font-size:13px;">Total: <span id="totalMessages">0</span></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="footer">
+        © <span id="currentYear">2025</span> Gbz • Central Futurista — Integração Firebase • Visual multicolorido
+      </div>
+
+    </div> <!-- end right column -->
+
+  </div> <!-- end main grid -->
+</div> <!-- end app -->
+
+<!-- ===========================
+     JavaScript: Interactivity
+     - Particles
+     - Themes
+     - Sounds
+     - Firebase send/receive
+   =========================== -->
+<script>
+/* ------------------------------
+   UTIL: Simple helper functions
+   ------------------------------ */
+function qs(sel, ctx=document){ return ctx.querySelector(sel); }
+function qsa(sel, ctx=document){ return Array.from(ctx.querySelectorAll(sel)); }
+function fmtDate(ts){ if(!ts) return ''; const d = new Date(ts); return d.toLocaleString('pt-BR'); }
+function make(text){ const div=document.createElement('div'); div.innerHTML=text; return div.firstElementChild; }
+
+/* ------------------------------
+   PARTICLES BACKGROUND (canvas)
+   - lightweight particle system
+   ------------------------------ */
+(function initParticles(){
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  let w=canvas.width=innerWidth, h=canvas.height=innerHeight;
+  const particles = [];
+  const PTR = Math.max(40, Math.floor((w*h)/90000)); // particle count scaled to viewport
+
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+
+  function createParticle(){
+    return {
+      x: rand(0,w),
+      y: rand(0,h),
+      vx: rand(-0.25,0.25),
+      vy: rand(-0.15,0.15),
+      r: rand(0.6,2.6),
+      hue: rand(180,320),
+      life: rand(60,280),
+      t: 0
+    };
+  }
+  for(let i=0;i<PTR;i++) particles.push(createParticle());
+
+  function resize(){ w=canvas.width=innerWidth; h=canvas.height=innerHeight; }
+  addEventListener('resize', resize);
+
+  function tick(){
+    ctx.clearRect(0,0,w,h);
+    for(const p of particles){
+      p.x += p.vx;
+      p.y += p.vy;
+      p.t++;
+      // wrap
+      if(p.x < -10) p.x = w+10;
+      if(p.x > w+10) p.x = -10;
+      if(p.y < -10) p.y = h+10;
+      if(p.y > h+10) p.y = -10;
+      // draw
+      ctx.beginPath();
+      const g = ctx.createRadialGradient(p.x,p.y,p.r*0.1,p.x,p.y,p.r*6);
+      g.addColorStop(0, `hsla(${p.hue},100%,70%,0.18)`);
+      g.addColorStop(0.6, `hsla(${p.hue+30},80%,50%,0.06)`);
+      g.addColorStop(1, `rgba(255,255,255,0)`);
+      ctx.fillStyle = g;
+      ctx.arc(p.x,p.y,p.r*6,0,Math.PI*2);
+      ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* ------------------------------
+   SOUNDS: simple click / success sounds with WebAudio
+   - no external files
+   ------------------------------ */
+const AudioEngine = (function(){
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  function beep(freq=800, time=0.06, type='sine', gain=0.02){
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + time);
+    setTimeout(()=>{ try{o.stop();}catch(e){} }, (time+0.02)*1000);
+  }
+  return { click(){ beep(1200,0.03,'sine',0.02); }, success(){ beep(880,0.09,'triangle',0.03); beep(1320,0.06,'sine',0.02); } };
+})();
+
+/* attach click sound on interactive elements */
+document.addEventListener('click', (e)=>{
+  const t = e.target;
+  if(t.closest('button') || t.matches('a') || t.closest('.social-btn')) {
+    try{ AudioEngine.click(); }catch(e){}
+  }
+});
+
+/* ------------------------------
+   THEME BUTTONS (switch accent colors)
+   ------------------------------ */
+const btnThemeA = qs('#btnThemeA');
+const btnThemeB = qs('#btnThemeB');
+
+btnThemeA.addEventListener('click', ()=>{
+  document.documentElement.style.setProperty('--accent-a','#00f0ff');
+  document.documentElement.style.setProperty('--accent-b','#ffa200');
+  document.documentElement.style.setProperty('--accent-c','#a166ff');
+});
+btnThemeB.addEventListener('click', ()=>{
+  document.documentElement.style.setProperty('--accent-a','#ffd07a');
+  document.documentElement.style.setProperty('--accent-b','#ff8fb3');
+  document.documentElement.style.setProperty('--accent-c','#7be0ff');
+});
+
+/* ------------------------------
+   FIREBASE: init with provided config
+   ------------------------------ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBfUH7E-il5iOttjtHKqrqiYsFAmNt9d5s",
+  authDomain: "booyahmind.firebaseapp.com",
+  databaseURL: "https://booyahmind-default-rtdb.firebaseio.com",
+  projectId: "booyahmind",
+  storageBucket: "booyahmind.firebasestorage.app",
+  messagingSenderId: "893667760259",
+  appId: "1:893667760259:web:4796b60789ed9916b0a3b6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ------------------------------
+   CONTACT FORM: send to Firebase
+   - saves at /messages/{pushId}
+   - includes name, email, subject, message, timestamp, read:false
+   ------------------------------ */
+const form = qs('#contactForm');
+const inputName = qs('#cf_name');
+const inputEmail = qs('#cf_email');
+const inputSubject = qs('#cf_subject');
+const inputMessage = qs('#cf_message');
+const formStatus = qs('#formStatus');
+const btnClear = qs('#btnClear');
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const name = inputName.value.trim();
+  const email = inputEmail.value.trim();
+  const subject = inputSubject.value.trim();
+  const message = inputMessage.value.trim();
+  if(!name || !email || !message) {
+    formStatus.style.color = 'var(--accent-b)';
+    formStatus.textContent = '⚠️ Preencha nome, email e mensagem.';
+    return;
+  }
+  // disable UI
+  formStatus.style.color = 'var(--muted)';
+  formStatus.textContent = 'Enviando...';
+  try{
+    const ref = db.ref('messages').push();
+    await ref.set({
+      name, email, subject: subject||null, message,
+      timestamp: Date.now(),
+      read: false
+    });
+    // success
+    formStatus.style.color = 'var(--accent-a)';
+    formStatus.textContent = '✅ Mensagem enviada com sucesso!';
+    AudioEngine.success();
+    form.reset();
+    setTimeout(()=>{ formStatus.textContent=''; }, 4000);
+  }catch(err){
+    formStatus.style.color = '#ff6666';
+    formStatus.textContent = 'Erro ao enviar: ' + (err.message || err);
+    console.error(err);
+  }
+});
+
+btnClear.addEventListener('click', ()=>{ form.reset(); formStatus.textContent=''; });
+
+/* ------------------------------
+   MESSAGES PANEL: realtime listener
+   - renders messages in #messagesPanel
+   - updates total and stat counters
+   ------------------------------ */
+const messagesPanel = qs('#messagesPanel');
+const totalMessagesEl = qs('#totalMessages');
+const statMessages = qs('#statMessages');
+let cacheMessages = {}; // id -> data
+
+function renderMessagesList(){
+  const arr = Object.entries(cacheMessages).map(([id,data]) => ({ id, ...data }));
+  arr.sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
+  messagesPanel.innerHTML = '';
+  if(arr.length === 0){
+    messagesPanel.innerHTML = '<div style="text-align:center; color:var(--muted); padding:18px;">Nenhuma mensagem ainda</div>';
+  } else {
+    for(const m of arr){
+      const div = document.createElement('div');
+      div.className = 'message-item';
+      div.innerHTML = `
+        <div class="message-meta">
+          <div class="from">${escapeHtml(m.name||'—')}</div>
+          <small>${escapeHtml(m.email||'—')}</small>
+          <small style="margin-top:6px; display:block; color:var(--muted);">${fmtDate(m.timestamp)}</small>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:700; color:var(--accent-a)">${escapeHtml(m.subject || '(sem assunto)')}</div>
+            <div style="font-size:12px; color:var(--muted)">${m.read ? 'Lida' : 'Não lida'}</div>
+          </div>
+          <div style="margin-top:8px; color:#dfe7f6; white-space:pre-wrap;">${escapeHtml(m.message)}</div>
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn-export" data-id="${m.id}" style="padding:6px 8px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted);">Copiar email</button>
+            <button class="btn-mark" data-id="${m.id}" style="padding:6px 8px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted);">${m.read ? 'Marcar não lida' : 'Marcar lida'}</button>
+            <button class="btn-del" data-id="${m.id}" style="padding:6px 8px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.03); color:#ff6b6b;">Deletar</button>
+          </div>
+        </div>
+      `;
+      messagesPanel.appendChild(div);
+    }
+  }
+  totalMessagesEl.textContent = arr.length;
+  statMessages.textContent = arr.length;
+}
+
+/* helper to escape */
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* listen realtime */
+const msgsRef = db.ref('messages');
+msgsRef.on('value', snap=>{
+  const val = snap.val() || {};
+  cacheMessages = val;
+  renderMessagesList();
+}, err=>{
+  console.error('Firebase listen error', err);
+  messagesPanel.innerHTML = `<div style="color:#ff8888">Erro ao conectar ao Firebase: ${escapeHtml(err && err.message)}</div>`;
+});
+
+/* delegated actions in messagesPanel */
+messagesPanel.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(btn.classList.contains('btn-export')){
+    const data = cacheMessages[id];
+    if(data && data.email){
+      await navigator.clipboard.writeText(data.email);
+      formStatus.style.color = 'var(--accent-a)'; formStatus.textContent = 'Email copiado para o clipboard';
+      setTimeout(()=>formStatus.textContent='',2200);
+    } else {
+      formStatus.style.color = '#ffa200'; formStatus.textContent = 'Email não disponível';
+    }
+  } else if(btn.classList.contains('btn-mark')){
+    try{
+      const current = cacheMessages[id];
+      if(!current) { formStatus.textContent='Mensagem não encontrada'; return; }
+      await db.ref('messages/'+id+'/read').set(!current.read);
+      formStatus.style.color = 'var(--accent-a)'; formStatus.textContent = 'Atualizado';
+      setTimeout(()=>formStatus.textContent='',1600);
+    }catch(err){ console.error(err); formStatus.style.color='#ff6666'; formStatus.textContent='Erro: '+err.message; }
+  } else if(btn.classList.contains('btn-del')){
+    if(!confirm('Deseja mesmo deletar esta mensagem?')) return;
+    try{
+      await db.ref('messages/'+id).remove();
+      formStatus.style.color = 'var(--accent-a)'; formStatus.textContent = 'Mensagem removida';
+      setTimeout(()=>formStatus.textContent='',1600);
+    }catch(err){ console.error(err); formStatus.style.color='#ff6666'; formStatus.textContent='Erro: '+err.message; }
+  }
+});
+
+/* ------------------------------
+   EXPORT CSV
+   ------------------------------ */
+qs('#btnExport').addEventListener('click', ()=>{
+  const list = Object.entries(cacheMessages || {}).map(([id,v])=> ({ id, ...v }));
+  if(list.length === 0){ formStatus.style.color = 'var(--muted)'; formStatus.textContent = 'Nenhuma mensagem para exportar'; return; }
+  const rows = [['id','name','email','subject','message','timestamp','read']];
+  for(const r of list){
+    rows.push([r.id, r.name||'', r.email||'', (r.subject||'').replace(/\n/g,'\\n'), (r.message||'').replace(/\n/g,'\\n'), r.timestamp||'', !!r.read]);
+  }
+  const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `gbz_messages_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  formStatus.style.color = 'var(--accent-a)'; formStatus.textContent = 'Exportado CSV';
+  setTimeout(()=>formStatus.textContent='',2000);
+});
+
+/* ------------------------------
+   DELETE ALL UTILITY (kept accessible only via console)
+   - no admin UI is provided as requested
+   ------------------------------ */
+window._gbz_deleteAllMessages = async function(){
+  if(!confirm('Confirmar exclusão de todas as mensagens? Essa ação é irreversível.')) return;
+  await db.ref('messages').remove();
+  alert('Todas as mensagens foram removidas (chamada via console).');
+};
+
+/* ------------------------------
+   READY: set current year
+   ------------------------------ */
+qs('#currentYear').textContent = new Date().getFullYear();
+
+/* ===============================
+   Final notes:
+   - Não há Twitter (removido conforme solicitado).
+   - Link de download atualizado para: https://gabrielcordeirosilva2010-ai.github.io/Gabzin-Hub/
+   - Não tem painel admin visível (conforme pedido).
+   - Em produção proteja seu Realtime Database com regras e Auth.
+   =============================== */
+</script>
+</body>
+</html>
