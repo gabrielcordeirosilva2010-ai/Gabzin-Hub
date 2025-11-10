@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>GbzStore — Painel (Loja de Games)</title>
 
-<!-- (Opcional) Firebase compat - descomente se for usar -->
-<!--
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
--->
 
 <style>
   /* === Tema "antigo / duro" (clean, painel lateral) === */
@@ -93,7 +91,6 @@
   /* helpers */
   .flex-right{display:flex;justify-content:flex-end;gap:8px}
   .muted-pill{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
-  footer{padding:12px;text-align:center;color:var(--muted);margin-top:18px;border-top:1px solid var(--border)}
   /* responsive */
   @media (max-width:980px){
     aside.sidebar{position:relative;width:100%;display:flex;flex-direction:row;overflow:auto;height:auto;padding:10px}
@@ -118,6 +115,11 @@
     <nav class="menu" role="menu">
       <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
       <button class="nav-btn" data-tab="loja">Loja</button>
+      <button class="nav-btn" data-tab="enviar">Enviar Jogo</button>
+      <button class="nav-btn" data-tab="favoritos">Favoritos</button>
+      <button class="nav-btn" data-tab="reports">Denúncias</button>
+      <button class="nav-btn" data-tab="users">Gerenciar Usuários</button>
+      <button class="nav-btn" data-tab="config">Configurações</button>
     </nav>
 
     <div class="section-title">Ações rápidas</div>
@@ -157,6 +159,7 @@
       </div>
       <div class="right">
         <button id="open-favs" class="btn ghost">Favoritos (<span id="fav-count">0</span>)</button>
+        <button id="open-report" class="btn ghost">Denunciar</button>
       </div>
     </div>
 
@@ -165,7 +168,7 @@
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
         <div style="flex:1">
           <h2 style="margin:0 0 8px 0">Painel</h2>
-          <div class="notice">Painel principal — resumo dos jogos e ações.</div>
+          <div class="notice">Painel principal — aqui você vê resumo dos jogos e acessa ações principais.</div>
         </div>
         <div style="width:320px">
           <div class="side-panel">
@@ -175,7 +178,7 @@
             </div>
             <div style="margin-top:10px;display:flex;gap:8px">
               <button id="btn-export" class="btn secondary">Exportar JSON</button>
-              <!-- Purge removido conforme pedido -->
+              <!-- PURGE REMOVIDO: botão de apagar todos os jogos foi removido conforme solicitado -->
             </div>
           </div>
         </div>
@@ -187,12 +190,12 @@
           <div id="stat-published" class="num">0</div>
         </div>
         <div class="stat">
-          <div class="muted">Favoritos salvos</div>
-          <div id="stat-favs" class="num">0</div>
+          <div class="muted">Denúncias</div>
+          <div id="stat-reports" class="num">0</div>
         </div>
         <div class="stat">
-          <div class="muted">Espaço</div>
-          <div class="num">—</div>
+          <div class="muted">Favoritos salvos</div>
+          <div id="stat-favs" class="num">0</div>
         </div>
       </div>
 
@@ -207,12 +210,94 @@
       <div id="catalog" class="grid"></div>
       <div id="empty" class="card muted" style="display:none">Nenhum jogo encontrado.</div>
     </section>
+
+    <section id="enviar" class="view" style="display:none">
+      <h2>Enviar Jogo</h2>
+      <div class="card">
+        <label>Nome do jogo</label>
+        <input id="g-name" type="text" placeholder="Nome">
+
+        <label>Descrição curta</label>
+        <input id="g-desc" type="text" placeholder="Descrição (opcional)">
+
+        <label>URL da imagem (thumbnail)</label>
+        <input id="g-img" type="url" placeholder="https://.../thumb.jpg" oninput="previewSendImage()">
+
+        <label>Regular tamanho da imagem (px altura)</label>
+        <div class="row">
+          <input id="g-img-height" type="number" min="80" max="600" value="160" style="width:110px"/>
+          <button id="use-default-thumb" class="btn ghost">Usar placeholder</button>
+          <div class="small-muted" style="margin-left:8px">Altura em px usada ao renderizar</div>
+        </div>
+
+        <img id="g-img-preview" src="" style="display:none;width:220px;border-radius:6px;margin-top:8px"/>
+
+        <label>Link do jogo / download</label>
+        <input id="g-link" type="url" placeholder="https://...">
+
+        <label>Tag</label>
+        <input id="g-tag" type="text" placeholder="ex: rpg, indie">
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="btn-send" class="btn">Enviar</button>
+          <button id="btn-clear" class="btn secondary">Limpar</button>
+          <button id="btn-validate" class="btn ghost">Validar link</button>
+        </div>
+        <div id="send-msg" class="small-muted" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <section id="favoritos" class="view" style="display:none">
+      <h2>Favoritos</h2>
+      <div id="fav-grid" class="grid"></div>
+    </section>
+
+    <section id="reports" class="view" style="display:none">
+      <h2>Denúncias</h2>
+      <div style="margin-bottom:8px" class="small-muted">Veja e modere denúncias enviadas por usuários.</div>
+      <div id="reports-list" class="grid"></div>
+    </section>
+
+    <section id="users" class="view" style="display:none">
+      <h2>Gerenciar Usuários</h2>
+      <div class="card">
+        <div class="small-muted">Lista simples de usuários (vazia até ter dados no DB).</div>
+        <div id="users-list" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <section id="perfil" class="view" style="display:none">
+      <h2>Perfil</h2>
+      <div class="card">
+        <label>Nome</label>
+        <input id="profile-name" type="text" placeholder="Seu nome">
+        <label>Email</label>
+        <input id="profile-email" type="email" placeholder="seu@exemplo.com">
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="btn-save-profile" class="btn">Salvar perfil</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="config" class="view" style="display:none">
+      <h2>Configurações</h2>
+      <div class="card">
+        <label>Permitir uploads públicos</label>
+        <select id="setting-allow-uploads"><option value="true">Sim</option><option value="false">Não</option></select>
+        <label style="margin-top:8px">Detectar DevTools (anti-hack)</label>
+        <select id="setting-detect-devtools"><option value="true">Ativar</option><option value="false">Desativar</option></select>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button id="btn-save-settings" class="btn">Salvar</button>
+          <button id="btn-fetch-settings" class="btn secondary">Recarregar</button>
+        </div>
+        <div class="small-muted" style="margin-top:10px">Observação: regras seguras devem ser aplicadas no Firebase. Este painel aplica apenas controles client-side.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
-<footer>© 2025 GbzStudio — Painel Admin • design antigo preservado</footer>
-
-<!-- REPORT MODAL (kept minimal for quick reporting) -->
+<!-- MODALS -->
 <div id="modal-report" class="modal" aria-hidden="true">
   <div class="sheet" role="dialog" aria-modal="true">
     <h3>Enviar denúncia</h3>
@@ -228,25 +313,36 @@
   </div>
 </div>
 
+<!-- SCRIPTS -->
 <script>
 /* =========================
-   (Opcional) Firebase config - descomente e ajuste se desejar usar
-   =========================
+   CONFIGURAÇÃO FIREBASE
+   ========================= */
 const firebaseConfig = {
-  // ... coloque aqui seu config se quiser
+  apiKey: "AIzaSyBfUH7E-il5iOttjtHKqrqiYsFAmNt9d5s",
+  authDomain: "booyahmind.firebaseapp.com",
+  databaseURL: "https://booyahmind-default-rtdb.firebaseio.com",
+  projectId: "booyahmind",
+  storageBucket: "booyahmind.firebasestorage.app",
+  messagingSenderId: "893667760259",
+  appId: "1:893667760259:web:4796b60789ed9916b0a3b6"
 };
-if(window.firebase && firebase.initializeApp) {
-  try { firebase.initializeApp(firebaseConfig); } catch(e){}
+try {
+  firebase.initializeApp(firebaseConfig);
+} catch(e) {
+  // already initialized
 }
-const db = (window.firebase && firebase.database) ? firebase.database() : null;
-========================= */
+const db = firebase.database();
 
 /* =========================
    STATE + HELPERS
    ========================= */
-let gamesCache = []; // local cache
+let gamesCache = []; // local cache of games
 const GAMES_PATH = 'games';
+const REPORTS_PATH = 'reports';
 const SETTINGS_PATH = 'settings';
+const PROFILE_PATH = 'profile';
+const USERS_PATH = 'users';
 
 // DOM helpers
 const qs = s => document.querySelector(s);
@@ -263,7 +359,7 @@ function isValidUrl(u){
 }
 
 /* =========================
-   NAV / VIEW HANDLING
+   UI: tab/navigation
    ========================= */
 qsa('.nav-btn').forEach(btn=>{
   btn.addEventListener('click', e=>{
@@ -273,6 +369,7 @@ qsa('.nav-btn').forEach(btn=>{
     qsa('.view').forEach(v=>v.style.display='none');
     const view = document.getElementById(tab);
     if(view) view.style.display = 'block';
+    // minor UX: scroll to top
     window.scrollTo({top:0, behavior:'smooth'});
   });
 });
@@ -312,7 +409,9 @@ function renderCatalog(list){
     const favBtn = el('button','btn secondary','♥');
     favBtn.title = 'Favoritar';
     favBtn.addEventListener('click', ()=> toggleFavorite(item.id));
-    bottom.appendChild(linkBtn); bottom.appendChild(favBtn);
+    const reportBtn = el('button','btn ghost','Denunciar');
+    reportBtn.addEventListener('click', ()=> openReportModal(item.id, item.link));
+    bottom.appendChild(linkBtn); bottom.appendChild(favBtn); bottom.appendChild(reportBtn);
 
     card.appendChild(thumb);
     card.appendChild(title);
@@ -348,8 +447,7 @@ function toggleFavorite(id){
   saveFavorites(favs); renderFavorites();
 }
 function renderFavorites(){
-  const favGrid = el('div');
-  favGrid.id = 'fav-temp';
+  const favGrid = qs('#fav-grid');
   favGrid.innerHTML = '';
   const favs = getFavorites();
   qs('#fav-count').textContent = favs.length;
@@ -371,19 +469,15 @@ function renderFavorites(){
     card.append(thumb, title, open, remove);
     favGrid.appendChild(card);
   });
-  // quick show in recent-grid if user opens favorites via button
-  const existing = qs('#fav-temp');
-  if(existing) existing.replaceWith(favGrid);
-  else document.body.appendChild(favGrid); // hidden fallback
 }
 
 /* =========================
-   REPORT MODAL (minimal)
+   REPORTS (write to Firebase)
    ========================= */
-function openReportModal(link){
+function openReportModal(id, link){
   qs('#modal-report').classList.add('open');
   qs('#modal-report').setAttribute('aria-hidden','false');
-  qs('#r-link').value = link || '';
+  qs('#r-link').value = link || id || '';
   qs('#r-reason').value = '';
   qs('#r-msg').textContent = '';
 }
@@ -395,69 +489,186 @@ qs('#r-send').addEventListener('click', ()=>{
   const link = sanitizeText(qs('#r-link').value);
   const reason = sanitizeText(qs('#r-reason').value);
   if(!link || !reason) { qs('#r-msg').textContent = 'Preencha link e motivo.'; return; }
-  // If using Firebase, push to reports path. Otherwise just show success.
+  const payload = { link, reason, ts: Date.now(), resolved: false };
+  db.ref(REPORTS_PATH).push(payload).then(()=>{
+    qs('#r-msg').textContent = 'Denúncia enviada.';
+    setTimeout(()=>{ qs('#modal-report').classList.remove('open'); qs('#modal-report').setAttribute('aria-hidden','true'); }, 1000);
+  }).catch(err=>{
+    console.error(err); qs('#r-msg').textContent = 'Erro ao enviar denúncia.';
+  });
+});
+
+/* =========================
+   SEND GAME (with validation)
+   ========================= */
+qs('#btn-send').addEventListener('click', async ()=>{
+  const name = sanitizeText(qs('#g-name').value);
+  const desc = sanitizeText(qs('#g-desc').value);
+  const img = qs('#g-img').value.trim();
+  const link = qs('#g-link').value.trim();
+  const tag = sanitizeText(qs('#g-tag').value);
+  const height = Number(qs('#g-img-height').value) || 160;
+
+  // client-side permission check (settings read from DB)
+  const allow = window._settings && window._settings.allowUploads===false ? false : true;
+  if(!allow){ qs('#send-msg').textContent = 'Uploads públicos estão desabilitados pelo administrador.'; return; }
+
+  if(!name || !link){ qs('#send-msg').textContent = 'Preencha nome e link.'; return; }
+  // basic URL check
+  if(!isValidUrl(link)){ qs('#send-msg').textContent = 'Link inválido.'; return; }
+  if(img && !isValidUrl(img)){ qs('#send-msg').textContent = 'URL da imagem inválida.'; return; }
+
+  // extra check: prevent obviously malicious inputs
+  if(name.length>150 || desc.length>400){ qs('#send-msg').textContent = 'Texto muito longo.'; return; }
+
+  // payload with simple client signature (timestamp + client fingerprint) - not cryptographically secure
+  const payload = {
+    name, desc, img: img || '', link, tag: tag || '', height, ts: Date.now(),
+    meta: { client: navigator.userAgent, tzOffset: new Date().getTimezoneOffset() }
+  };
+
+  qs('#send-msg').textContent = 'Enviando...';
   try{
-    if(window.db){ db.ref('reports').push({link,reason,ts:Date.now()}); }
-    qs('#r-msg').textContent = 'Denúncia registrada.';
-    setTimeout(()=>{ qs('#modal-report').classList.remove('open'); qs('#modal-report').setAttribute('aria-hidden','true'); }, 900);
+    // push to firebase
+    await db.ref(GAMES_PATH).push(payload);
+    qs('#send-msg').textContent = 'Jogo enviado com sucesso.';
+    qs('#g-name').value=''; qs('#g-desc').value=''; qs('#g-img').value=''; qs('#g-link').value=''; qs('#g-tag').value=''; qs('#g-img-preview').style.display='none';
+    // reload intentionally handled by DB listener
+  }catch(err){
+    console.error(err);
+    qs('#send-msg').textContent = 'Erro ao enviar. Veja console.';
+  }
+});
+
+/* preview image for send form */
+function previewSendImage(){
+  const url = qs('#g-img').value.trim();
+  const img = qs('#g-img-preview');
+  if(url && isValidUrl(url)){ img.src = url; img.style.display='block'; } else { img.style.display='none'; }
+}
+qs('#use-default-thumb').addEventListener('click', ()=>{
+  qs('#g-img').value = '';
+  qs('#g-img-preview').style.display='none';
+});
+
+/* validate link (simple HEAD fetch) */
+qs('#btn-validate').addEventListener('click', async ()=>{
+  const link = qs('#g-link').value.trim();
+  if(!isValidUrl(link)) { qs('#send-msg').textContent = 'Link inválido.'; return; }
+  qs('#send-msg').textContent = 'Validando (checagem básica)...';
+  try{
+    // try to fetch headers — many servers block CORS so this is best-effort
+    await fetch(link, { method:'HEAD', mode:'no-cors' });
+    qs('#send-msg').textContent = 'Validação feita (não conclusiva por restrições CORS).';
   }catch(e){
-    qs('#r-msg').textContent = 'Denúncia registrada (local).';
-    setTimeout(()=>{ qs('#modal-report').classList.remove('open'); qs('#modal-report').setAttribute('aria-hidden','true'); }, 900);
+    qs('#send-msg').textContent = 'Não foi possível validar (CORS / bloqueado).';
   }
 });
 
 /* =========================
-   DB LISTENERS: (light, if firebase enabled)
-   - If firebase is not present, we simulate empty state.
+   DB LISTENERS: games, reports, settings, users
    ========================= */
 function setupDbListeners(){
-  if(window.db){
-    // real-time games listener if Firebase available
-    db.ref(GAMES_PATH).on('value', snapshot=>{
-      const val = snapshot.val() || {};
-      gamesCache = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
-      gamesCache = gamesCache.map(g=>({
-        id: g.id,
-        name: g.name || g.nome || '',
-        desc: g.desc || '',
-        img: g.img || g.imagem || '',
-        link: g.link || g.link || g.url || '',
-        tag: g.tag || '',
-        height: g.height || 160,
-        ts: g.ts || Date.now()
-      }));
-      gamesCache.sort((a,b)=> (b.ts||0) - (a.ts||0));
-      renderCatalog(gamesCache);
-      renderFavorites();
-    });
-  } else {
-    // no firebase -> keep empty initial state (you can populate gamesCache manually here)
-    gamesCache = [];
+  // games (realtime)
+  db.ref(GAMES_PATH).on('value', snapshot=>{
+    const val = snapshot.val() || {};
+    gamesCache = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
+    // ensure consistent fields
+    gamesCache = gamesCache.map(g=>({
+      id: g.id,
+      name: g.name || g.nome || '',
+      desc: g.desc || '',
+      img: g.img || g.imagem || '',
+      link: g.link || g.link || g.url || '',
+      tag: g.tag || '',
+      height: g.height || g.altura || g.h || 160,
+      ts: g.ts || Date.now()
+    }));
+    // sort by timestamp desc
+    gamesCache.sort((a,b)=> (b.ts||0) - (a.ts||0));
     renderCatalog(gamesCache);
     renderFavorites();
-  }
+    // stats
+    qs('#stat-published').textContent = gamesCache.length;
+    qs('#total-games').textContent = gamesCache.length;
+  });
+
+  // reports
+  db.ref(REPORTS_PATH).on('value', snap=>{
+    const val = snap.val() || {};
+    const arr = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
+    qs('#stat-reports').textContent = arr.length;
+    const reportsList = qs('#reports-list');
+    reportsList.innerHTML = '';
+    if(arr.length===0){ reportsList.innerHTML = '<div class="card muted">Sem denúncias</div>'; return; }
+    arr.forEach(r=>{
+      const card = el('div','card');
+      const link = el('div','meta', 'Link: '+sanitizeText(r.link || '—'));
+      const reason = el('div','muted','Motivo: '+sanitizeText(r.reason || '—'));
+      const ts = el('div','small-muted', new Date(r.ts||0).toLocaleString());
+      const btns = el('div','row');
+      const resolve = el('button','btn secondary','Marcar como resolvido');
+      resolve.addEventListener('click', ()=> {
+        db.ref(REPORTS_PATH+'/'+r.id).update({ resolved: true, resolvedTs: Date.now() });
+      });
+      btns.appendChild(resolve);
+      card.append(link, reason, ts, btns);
+      reportsList.appendChild(card);
+    });
+  });
+
+  // users (simple read-only listing)
+  db.ref(USERS_PATH).on('value', snap=>{
+    const val = snap.val() || {};
+    const arr = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
+    const list = qs('#users-list');
+    list.innerHTML = '';
+    if(arr.length===0){ list.innerHTML = '<div class="small-muted">Sem usuários</div>'; return; }
+    arr.forEach(u=>{
+      const row = el('div','row');
+      const name = el('div','','<strong>'+(sanitizeText(u.name||'—'))+'</strong>');
+      const mail = el('div','small-muted', sanitizeText(u.email||'—'));
+      const btn = el('button','btn ghost','Ver');
+      btn.addEventListener('click', ()=> alert(`Usuário: ${u.name}\nEmail: ${u.email}`));
+      row.style.justifyContent = 'space-between';
+      row.appendChild(name);
+      row.appendChild(mail);
+      row.appendChild(btn);
+      list.appendChild(row);
+    });
+  });
+
+  // settings (read + keep local)
+  db.ref(SETTINGS_PATH).once('value').then(snap=>{
+    const settings = snap.val() || {};
+    window._settings = settings;
+    // reflect in UI
+    qs('#setting-allow-uploads').value = (settings.allowUploads===false) ? 'false' : 'true';
+    qs('#setting-detect-devtools').value = (settings.detectDevtools===false) ? 'false' : 'true';
+  }).catch(err=>console.warn('settings fetch failed', err));
 }
 
-/* =========================
-   ACTION BUTTONS
-   ========================= */
-qs('#btn-refresh').addEventListener('click', ()=> { /* if firebase, listeners are live */ qs('#open-stats').textContent = 'Atualizado'; setTimeout(()=>qs('#open-stats').textContent='Ver Estatísticas',800); });
-qs('#btn-clear-favs').addEventListener('click', ()=> { localStorage.removeItem('gbz_favs'); saveFavorites([]); renderFavorites(); });
-qs('#open-favs').addEventListener('click', ()=>{
-  // open Favorites "view" quick: show favorites in recent-grid
-  const favs = getFavorites();
-  if(favs.length===0){
-    alert('Nenhum favorito salvo.');
-    return;
-  }
-  const list = gamesCache.filter(g=> favs.includes(g.id));
-  renderCatalog(list);
-  // switch to Loja tab for visualization
-  qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
-  qsa('.nav-btn[data-tab="loja"]').forEach(b=>b.classList.add('active'));
-  qsa('.view').forEach(v=>v.style.display='none');
-  qs('#loja').style.display = 'block';
+qs('#btn-fetch-settings').addEventListener('click', ()=>{
+  db.ref(SETTINGS_PATH).once('value').then(snap=>{
+    window._settings = snap.val() || {};
+    qs('#send-msg').textContent = 'Configurações recarregadas.';
+  });
 });
+qs('#btn-save-settings').addEventListener('click', ()=>{
+  const allow = qs('#setting-allow-uploads').value === 'true';
+  const detect = qs('#setting-detect-devtools').value === 'true';
+  db.ref(SETTINGS_PATH).set({ allowUploads: allow, detectDevtools: detect })
+    .then(()=> { qs('#send-msg').textContent = 'Configurações salvas.'; window._settings = { allowUploads: allow, detectDevtools: detect }; })
+    .catch(err=>{ console.error(err); qs('#send-msg').textContent = 'Erro ao salvar configurações.'; });
+});
+
+/* =========================
+   BUTTONS / ACTIONS
+   ========================= */
+qs('#btn-refresh').addEventListener('click', ()=> { qs('#send-msg').textContent = 'Atualizando...'; /* DB listener auto updates */ setTimeout(()=>qs('#send-msg').textContent='Pronto',800); });
+
+qs('#btn-clear-favs').addEventListener('click', ()=> { localStorage.removeItem('gbz_favs'); renderFavorites(); });
+
 qs('#btn-export').addEventListener('click', ()=>{
   const data = JSON.stringify(gamesCache, null, 2);
   const blob = new Blob([data], {type:'application/json'});
@@ -466,11 +677,19 @@ qs('#btn-export').addEventListener('click', ()=>{
   URL.revokeObjectURL(url);
 });
 
-/* =========================
-   SEARCH & SORT
-   ========================= */
+/* NOTE: botão "Purgar" e seu handler foram removidos conforme solicitado. */
+
+/* PROFILE */
+qs('#btn-save-profile').addEventListener('click', ()=>{
+  const name = sanitizeText(qs('#profile-name').value);
+  const email = sanitizeText(qs('#profile-email').value);
+  db.ref(PROFILE_PATH).set({name,email,ts:Date.now()}).then(()=> alert('Perfil salvo.'));
+});
+
+/* search & sort */
 qs('#global-search').addEventListener('input', applyFilters);
 qs('#sort-select').addEventListener('change', applyFilters);
+
 function applyFilters(){
   const q = qs('#global-search').value.trim().toLowerCase();
   let list = gamesCache.slice();
@@ -488,37 +707,54 @@ saveFavorites(getFavorites());
 
 /* =========================
    BASIC ANTI-HACK / INTEGRITY DETECTIONS
-   (Client-side: detect DevTools, detect DOM mutation)
+   (Client-side: detect DevTools, detect DOM mutation, integrity hash)
    ========================= */
+
+/* 1) detect DevTools open (approx.) */
 let devtoolsOpen = false;
 function detectDevTools(){
+  // technique: measure time to execute debugger statement or check window dimensions
   const threshold = 160;
   const widthThreshold = window.outerWidth - window.innerWidth > threshold;
   const heightThreshold = window.outerHeight - window.innerHeight > threshold;
   devtoolsOpen = widthThreshold || heightThreshold;
+  // also use performance timing trick
   try{
     const start = performance.now();
-    debugger;
+    debugger; // note: in many browsers this triggers only if DevTools open
     const elapsed = performance.now() - start;
     if(elapsed > 100) devtoolsOpen = true;
   }catch(e){}
+  // reflect status
   qs('#anti-status').textContent = (devtoolsOpen ? 'detectado' : 'ativado');
-  if(devtoolsOpen){ // basic UI lock
-    if(qs('#btn-export')) qs('#btn-export').disabled = true;
+  // if detected and server setting enforces action, warn & lock UI
+  if(devtoolsOpen && window._settings && window._settings.detectDevtools!==false){
+    // disable send button and show big notice
+    if(qs('#btn-send')) qs('#btn-send').disabled = true;
+    if(!document.getElementById('dev-warning')){
+      const w = el('div','sheet','<div style="color:var(--danger);font-weight:800">Detectamos que o DevTools está aberto. Ações sensíveis foram bloqueadas.</div>');
+      w.id = 'dev-warning';
+      document.body.appendChild(w);
+      setTimeout(()=>{ if(w.parentNode) w.parentNode.removeChild(w); }, 6000);
+    }
   } else {
-    if(qs('#btn-export')) qs('#btn-export').disabled = false;
+    if(qs('#btn-send')) qs('#btn-send').disabled = false;
   }
 }
 setInterval(detectDevTools, 1500);
 
-const originalHTML = document.documentElement.innerHTML.slice(0, 4000);
+/* 2) DOM mutation detector (watch for script tampering) */
+const originalHTML = document.documentElement.innerHTML.slice(0, 4000); // sample
 const mo = new MutationObserver(muts=>{
   for(const m of muts){
+    // if someone injected a script node into head or changed critical nodes, take action
     if(m.addedNodes && m.addedNodes.length){
       for(const n of m.addedNodes){
         if(n.tagName && n.tagName.toLowerCase()==='script'){
           console.warn('Script injection detected', n);
-          try{ if(window.db) db.ref('intrusions').push({type:'script-inject', html: (n.src || n.innerText||'inline'), ts: Date.now(), ua: navigator.userAgent}); }catch(e){}
+          // send a log to firebase bug log (best-effort)
+          try{ db.ref('intrusions').push({type:'script-inject', html: (n.src || n.innerText||'inline'), ts: Date.now(), ua: navigator.userAgent}); }catch(e){}
+          // remove node
           try{ n.parentNode.removeChild(n); }catch(e){}
         }
       }
@@ -526,6 +762,28 @@ const mo = new MutationObserver(muts=>{
   }
 });
 mo.observe(document.documentElement, {childList:true, subtree:true});
+
+/* 3) periodic integrity check (not secure, but raises flag) */
+function performIntegrityCheck(){
+  try{
+    const current = document.documentElement.innerHTML.slice(0, 4000);
+    if(current !== originalHTML.slice(0,4000)){
+      console.warn('Document snapshot changed (integrity mismatch)');
+      try{ db.ref('intrusions').push({type:'integrity-mismatch', ts: Date.now(), ua: navigator.userAgent}); }catch(e){}
+    }
+  }catch(e){}
+}
+setInterval(performIntegrityCheck, 10000);
+
+/* add handler to disable basic bad actions (prevent easy console override) */
+(function disableEasyTampering(){
+  // override console.warn to capture tampering attempts
+  const origWarn = console.warn;
+  console.warn = function(...args){
+    origWarn.apply(console, args);
+    try{ db.ref('intrusions').push({type:'console-warn', payload: String(args).slice(0,500), ts: Date.now()}); }catch(e){}
+  };
+})();
 
 /* =========================
    INIT
@@ -535,12 +793,54 @@ applyFilters();
 
 /* small helpers on load */
 window.addEventListener('load', ()=> {
-  // make nav buttons work on load (ensure default shown)
-  qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
-  qsa('.nav-btn[data-tab="dashboard"]').forEach(b=>b.classList.add('active'));
-  qsa('.view').forEach(v=>v.style.display='none');
-  qs('#dashboard').style.display = 'block';
+  // button actions for report & fav quick open
+  qs('#open-report').addEventListener('click', ()=> openReportModal());
+  qs('#open-favs').addEventListener('click', ()=> {
+    qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
+    qsa('.nav-btn[data-tab="favoritos"]').forEach(b=>b.classList.add('active'));
+    qsa('.view').forEach(v=>v.style.display='none');
+    qs('#favoritos').style.display='block';
+    renderFavorites();
+  });
 });
+
+/* =========================
+   Small UX utils
+   ========================= */
+function toggleFavoriteUI(id){
+  // updates count in UI (already done by saveFavorites)
+  const arr = getFavorites();
+  qs('#fav-count').textContent = arr.length;
+}
+
+/* =========================
+   Final note: server-side rules suggestion (copy to Firebase Console)
+   - Below is a minimal Realtime Database rules example you should set (NOT for production).
+   - Replace with stricter rules (auth required for destructive ops).
+   ========================= */
+
+console.log(`==== SUGESTÃO DE REGRAS (Realtime Database) ====
+{
+  \"rules\": {
+    \"games\": {
+      \".read\": true,
+      \".write\": true
+    },
+    \"reports\": {
+      \".read\": true,
+      \".write\": true
+    },
+    \"settings\": {
+      \".read\": true,
+      \".write\": \"auth != null\"   // recomenda-se que apenas admin autenticado altere settings
+    },
+    \"intrusions\": {
+      \".read\": false,
+      \".write\": true
+    }
+  }
+}
+====================================================`);
 </script>
 </body>
 </html>
