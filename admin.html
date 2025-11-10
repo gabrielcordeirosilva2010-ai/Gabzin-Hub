@@ -1,169 +1,458 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel Admin - GbzStudio</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GbzStore — Painel Melhorado (GbzStudio)</title>
+
 <style>
-body {
-  margin: 0;
-  font-family: "Poppins", sans-serif;
-  background: #0d0d0d;
-  color: #fff;
-  overflow-x: hidden;
-}
-header {
-  background: #111;
-  padding: 15px;
-  text-align: center;
-  font-size: 22px;
-  color: #ffa200;
-  font-weight: 700;
-  box-shadow: 0 0 15px #000;
-}
-nav {
-  width: 250px;
-  height: 100vh;
-  background: #111;
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 30px;
-  box-shadow: 5px 0 15px #000;
-}
-nav button {
-  width: 80%;
-  padding: 12px;
-  margin: 8px 0;
-  background: #1a1a1a;
-  color: #ffa200;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  transition: 0.3s;
-  cursor: pointer;
-}
-nav button:hover {
-  background: #ffa200;
-  color: #111;
-  transform: scale(1.05);
-  box-shadow: 0 0 15px #ffa200;
-}
-main {
-  margin-left: 270px;
-  padding: 30px;
-}
-section {
-  display: none;
-  background: #141414;
-  padding: 25px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px #000;
-}
-section.active {
-  display: block;
-  animation: fadeIn 0.3s ease-in-out;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.card {
-  background: #1a1a1a;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 15px;
-  box-shadow: 0 0 10px #000;
-  transition: 0.2s;
-}
-.card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 15px #ffa200;
-}
-footer {
-  text-align: center;
-  padding: 15px;
-  color: #777;
-  font-size: 14px;
-  margin-top: 40px;
-}
+  :root{
+    --bg:#0b0d10; --panel:#0f1317; --muted:#9aa9b6; --accent:#ff8a00; --card:#0b1116;
+    --border:rgba(255,255,255,0.03); --success:#22c55e; --danger:#ff5555;
+  }
+  [data-theme="light"]{
+    --bg:#f4f6f8; --panel:#ffffff; --muted:#495057; --accent:#ff8a00; --card:#ffffff;
+    --border:rgba(0,0,0,0.06); --success:#16a34a; --danger:#dc2626; color: #0a0a0a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#051018);color:var(--muted)}
+  body{color: #e6eef8}
+  [data-theme="light"] body{color: #111827}
+  .app{display:flex;min-height:100vh}
+  aside.sidebar{
+    width:260px;background:linear-gradient(180deg,var(--panel),#07101a);border-right:1px solid var(--border);
+    padding:20px;display:flex;flex-direction:column;gap:12px;position:fixed;left:0;top:0;bottom:0;
+  }
+  .logo{display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .logo .mark{width:46px;height:46px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff5a5a);display:flex;align-items:center;justify-content:center;font-weight:900;color:#071018}
+  .logo h1{font-size:16px;margin:0;color:var(--muted)}
+  nav.menu{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .nav-btn{background:transparent;border:1px solid transparent;padding:10px 12px;border-radius:8px;color:var(--muted);text-align:left;cursor:pointer;font-weight:700;transition:all .14s ease}
+  .nav-btn:hover{transform:translateX(6px)}
+  .nav-btn.active{background:rgba(255,255,255,0.02);border-color:var(--border);color:inherit}
+  .main{margin-left:260px;padding:20px;flex:1;min-height:100vh;overflow:auto}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+  input[type=search]{padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit;min-width:260px}
+  .card{background:linear-gradient(180deg,var(--card),rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 18px rgba(0,0,0,0.25)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .thumb{height:120px;border-radius:8px;background:#081522;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .title{font-weight:800;color:inherit}
+  .meta{font-size:13px;color:var(--muted)}
+  .row{display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#071018;font-weight:800;cursor:pointer}
+  .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:700}
+  .btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--muted)}
+  .muted{color:var(--muted)}
+  label{font-size:13px;color:var(--muted);display:block;margin-top:8px}
+  input[type=text],textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit}
+  textarea{min-height:90px;resize:vertical}
+  footer{padding:12px;text-align:center;color:var(--muted);margin-top:18px;border-top:1px solid var(--border)}
+  .small-muted{font-size:12px;color:var(--muted)}
+  .action-row{display:flex;gap:8px;justify-content:flex-end}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .table{width:100%;border-collapse:collapse}
+  .table th, .table td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+  .notif{position:fixed;right:18px;bottom:18px;background:linear-gradient(180deg,#0b1220,#06121a);padding:12px 16px;border-radius:10px;border:1px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,0.6);color:#e6eef8;transform:translateY(20px);opacity:0;transition:all .28s ease;z-index:2200}
+  .notif.show{transform:translateY(0);opacity:1}
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(1,4,10,0.6);z-index:1200}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);padding:18px;border-radius:10px;border:1px solid var(--border);width:100%;max-width:720px}
+  /* responsive */
+  @media (max-width:980px){aside.sidebar{position:relative;width:100%;display:flex;flex-direction:row;overflow:auto;height:auto;padding:10px} .main{margin-left:0;padding:12px}}
 </style>
 </head>
-<body>
+<body data-theme="dark">
+<div class="app">
 
-<header>Painel Admin - GbzStudio</header>
-
-<nav>
-  <button onclick="showSection('dashboard')">📊 Dashboard</button>
-  <button onclick="showSection('loja')">🛒 Loja</button>
-  <button onclick="showSection('usuarios')">👥 Gerenciar Usuários</button>
-  <button onclick="showSection('denuncias')">🚨 Denúncias</button>
-  <button onclick="showSection('config')">⚙️ Configurações</button>
-  <button onclick="showSection('enviar')">📤 Enviar Jogo</button>
-</nav>
-
-<main>
-  <section id="dashboard" class="active">
-    <h2>📊 Dashboard</h2>
-    <div class="card">Bem-vindo ao Painel Admin da <b>GbzStudio</b>.</div>
-    <div class="card">Aqui você pode visualizar estatísticas e informações gerais.</div>
-  </section>
-
-  <section id="loja">
-    <h2>🛒 Loja</h2>
-    <div class="card">Gerencie os itens disponíveis na loja do sistema.</div>
-    <div class="card">
-      <button style="background:#ffa200;color:#111;padding:10px 15px;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Adicionar Novo Item</button>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" role="navigation" aria-label="Menu principal">
+    <div class="logo">
+      <div class="mark">GT</div>
+      <div>
+        <h1>GbzStore</h1>
+        <div class="small-muted">Painel Melhorado</div>
+      </div>
     </div>
-  </section>
 
-  <section id="usuarios">
-    <h2>👥 Gerenciar Usuários</h2>
-    <div class="card">Veja e edite os usuários registrados no sistema.</div>
-    <div class="card">Função: Banir / Promover / Editar Usuário</div>
-  </section>
+    <nav class="menu" role="menu">
+      <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="nav-btn" data-tab="users">Gerenciar Usuários</button>
+      <button class="nav-btn" data-tab="reports">Denúncias</button>
+      <button class="nav-btn" data-tab="config">Configurações</button>
+      <button class="nav-btn" data-tab="enviar">Enviar Jogo</button>
+    </nav>
 
-  <section id="denuncias">
-    <h2>🚨 Denúncias</h2>
-    <div class="card">Aqui aparecem as denúncias enviadas pelos jogadores.</div>
-    <div class="card">Opções: Marcar como resolvida / Deletar / Ver detalhes</div>
-  </section>
-
-  <section id="config">
-    <h2>⚙️ Configurações</h2>
-    <div class="card">Configurações gerais do sistema e aparência do painel.</div>
-  </section>
-
-  <section id="enviar">
-    <h2>📤 Enviar Jogo</h2>
-    <div class="card">Envie novos jogos ou atualizações para o servidor.</div>
-    <div class="card">
-      <input type="file" style="padding:10px;background:#222;border:none;border-radius:10px;color:#ffa200;">
-      <button style="margin-top:10px;background:#ffa200;color:#111;padding:10px 15px;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Enviar</button>
+    <div class="section-title">Ações rápidas</div>
+    <div class="card side-panel" style="padding:10px">
+      <div class="row" style="justify-content:space-between">
+        <div>Total Jogos</div><div id="sidebar-count" class="pill">0</div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button id="btn-refresh" class="btn secondary">Atualizar</button>
+        <button id="btn-export" class="btn ghost" title="Exportar catálogo">Exportar</button>
+      </div>
+      <div style="margin-top:10px" class="small-muted">Modo anti-hack: <strong id="anti-status">ativado</strong></div>
     </div>
-  </section>
 
-  <footer>© 2025 GbzStudio - Todos os direitos reservados.</footer>
-</main>
+    <div style="margin-top:auto">
+      <div class="small-muted" style="margin-bottom:6px">Versão</div>
+      <div class="card side-panel" style="display:flex;justify-content:space-between;align-items:center">
+        <div>GbzStore — Melhorado</div>
+        <div class="muted">2025</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" role="main">
+    <div class="topbar">
+      <div class="left">
+        <input id="global-search" type="search" placeholder="Pesquisar jogos, tags, usuários..." />
+        <select id="sort-select" style="margin-left:8px;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit">
+          <option value="newest">Mais recentes</option>
+          <option value="name">Nome A→Z</option>
+        </select>
+      </div>
+      <div class="right">
+        <div class="pill" id="stats-users">Usuários: 0</div>
+        <div class="pill" id="stats-reports">Denúncias: 0</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="view">
+      <div class="card">
+        <h2 style="margin:0 0 8px 0">Dashboard</h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div class="card" style="flex:1;min-width:200px">
+            <div class="muted">Total de jogos</div>
+            <div class="stat num" id="total-games" style="font-weight:800;font-size:20px">0</div>
+          </div>
+          <div class="card" style="flex:1;min-width:200px">
+            <div class="muted">Denúncias pendentes</div>
+            <div class="stat num" id="pending-reports" style="font-weight:800;font-size:20px">0</div>
+          </div>
+          <div class="card" style="flex:1;min-width:200px">
+            <div class="muted">Usuários</div>
+            <div class="stat num" id="total-users" style="font-weight:800;font-size:20px">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 8px 0">Últimos jogos</h3>
+        <div id="recent-grid" class="grid"></div>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="users" class="view" style="display:none">
+      <div class="card">
+        <h2 style="margin:0 0 8px 0">Gerenciar Usuários</h2>
+        <input id="user-search" type="text" placeholder="Pesquisar por nome ou email..." oninput="renderUsers()" />
+        <div style="margin-top:12px;overflow:auto">
+          <table class="table" id="users-table">
+            <thead><tr><th>Nome</th><th>Email</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="reports" class="view" style="display:none">
+      <div class="card">
+        <h2 style="margin:0 0 8px 0">Denúncias</h2>
+        <div id="reports-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section id="config" class="view" style="display:none">
+      <div class="card">
+        <h2 style="margin:0 0 8px 0">Configurações</h2>
+        <label>Nome do Painel</label>
+        <input id="panel-name" type="text" value="GbzStore — Melhorado" />
+        <label style="margin-top:8px">Tema</label>
+        <select id="theme-select"><option value="dark">Dark</option><option value="light">Light</option></select>
+        <div class="action-row"><button id="save-config" class="btn">Salvar</button></div>
+        <div class="small-muted" style="margin-top:10px">As alterações estão no cliente (localStorage) — sincronize com servidor se usar Firebase.</div>
+      </div>
+    </section>
+
+    <!-- ENVIAR -->
+    <section id="enviar" class="view" style="display:none">
+      <div class="card">
+        <h2 style="margin:0 0 8px 0">Enviar Jogo</h2>
+        <label>Nome do Jogo</label>
+        <input id="g-name" type="text" placeholder="Nome do jogo" />
+        <label>Descrição</label>
+        <textarea id="g-desc" placeholder="Breve descrição..."></textarea>
+        <label>URL da thumbnail (opcional)</label>
+        <input id="g-img" type="text" placeholder="https://.../thumb.jpg" />
+        <label>Link / Download</label>
+        <input id="g-link" type="text" placeholder="https://..." />
+        <div class="action-row"><button id="btn-send" class="btn">Enviar Jogo</button></div>
+        <div id="send-msg" class="small-muted" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>© 2025 GbzStudio — Painel Melhorado</footer>
+
+<!-- modal confirm / edit -->
+<div id="modal-edit" class="modal" aria-hidden="true">
+  <div class="sheet">
+    <h3 id="modal-title">Editar usuário</h3>
+    <label>Nome</label><input id="edit-name" type="text"/>
+    <label>Email</label><input id="edit-email" type="text"/>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button id="edit-cancel" class="btn secondary">Cancelar</button>
+      <button id="edit-save" class="btn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- notification -->
+<div id="notif" class="notif" role="status"></div>
 
 <script>
-// sistema de navegação
-function showSection(id) {
-  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+/* =========================
+   Simulated data (local) + helpers
+   ========================= */
+let gamesCache = [
+  {id:'g1', name:'Clicker Saga', desc:'Um clique épico', img:'', link:'#', ts:Date.now()-1000*60*60},
+  {id:'g2', name:'Mini RPG', desc:'Aventura curta', img:'', link:'#', ts:Date.now()-1000*60*40},
+  {id:'g3', name:'Race Lite', desc:'Corridas 2D', img:'', link:'#', ts:Date.now()-1000*60*20}
+];
+let users = [
+  {id:'u1', name:'Gbz', email:'gbz@example.com', status:'ativo'},
+  {id:'u2', name:'PlayerX', email:'playerx@example.com', status:'ativo'},
+  {id:'u3', name:'NoobBR', email:'noob@example.com', status:'banido'}
+];
+let reports = [
+  {id:'r1', link:'g2', reason:'Uso de script', ts:Date.now()-1000*60*30},
+  {id:'r2', link:'g3', reason:'Conteúdo impróprio', ts:Date.now()-1000*60*10}
+];
+
+const qs = s => document.querySelector(s);
+const qsa = s => Array.from(document.querySelectorAll(s));
+const el = (t,c,html)=>{const e=document.createElement(t); if(c) e.className=c; if(html!==undefined) e.innerHTML=html; return e;};
+
+function showNotif(text, time=2200){
+  const n = qs('#notif');
+  n.textContent = text;
+  n.classList.add('show');
+  clearTimeout(n._t); n._t = setTimeout(()=> n.classList.remove('show'), time);
 }
 
-// anti-inspect básico
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key))) {
-    e.preventDefault();
-    alert("🔒 Acesso restrito - AntiHack GbzStudio");
+/* =========================
+   Renderers
+   ========================= */
+function renderCatalog(list=gamesCache){
+  const catalog = qs('#recent-grid');
+  catalog.innerHTML = '';
+  list.forEach(item=>{
+    const card = el('div','card');
+    const title = el('div','title', item.name);
+    const desc = el('div','meta', item.desc || '');
+    const row = el('div','row');
+    const open = el('button','btn secondary','Abrir');
+    open.addEventListener('click', ()=> window.open(item.link || '#','_blank'));
+    row.appendChild(open);
+    card.appendChild(title); card.appendChild(desc); card.appendChild(row);
+    catalog.appendChild(card);
+  });
+  qs('#sidebar-count').textContent = list.length;
+  qs('#total-games').textContent = list.length;
+}
+
+function renderUsers(){
+  const tbody = qs('#users-table tbody');
+  tbody.innerHTML = '';
+  const q = qs('#user-search').value.trim().toLowerCase();
+  users.filter(u => !q || u.name.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q))
+    .forEach(u=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${u.name}</td><td>${u.email}</td><td>${u.status}</td><td></td>`;
+      const actionsTd = tr.querySelector('td:last-child');
+      const btnView = el('button','btn secondary','Ver'); btnView.style.marginRight='6px';
+      btnView.addEventListener('click', ()=> showUser(u.id));
+      const btnEdit = el('button','btn ghost','Editar'); btnEdit.style.marginRight='6px';
+      btnEdit.addEventListener('click', ()=> openEditModal(u.id));
+      const btnBan = el('button','btn','Banir');
+      btnBan.addEventListener('click', ()=> banUser(u.id));
+      actionsTd.append(btnView, btnEdit, btnBan);
+      tbody.appendChild(tr);
+    });
+  qs('#total-users').textContent = users.length;
+  qs('#stats-users').textContent = `Usuários: ${users.length}`;
+}
+
+function renderReports(){
+  const list = qs('#reports-list');
+  list.innerHTML = '';
+  if(reports.length===0){ list.innerHTML = '<div class="small-muted">Sem denúncias</div>'; qs('#pending-reports').textContent = '0'; qs('#stats-reports').textContent = `Denúncias: 0`; return; }
+  reports.forEach(r=>{
+    const card = el('div','card');
+    const title = el('div','title', `Link / Jogo: ${r.link}`);
+    const reason = el('div','meta', r.reason);
+    const ts = el('div','small-muted', new Date(r.ts).toLocaleString());
+    const row = el('div','action-row');
+    const btnResolve = el('button','btn secondary','Resolver');
+    btnResolve.addEventListener('click', ()=> resolveReport(r.id));
+    row.appendChild(btnResolve);
+    card.append(title, reason, ts, row);
+    list.appendChild(card);
+  });
+  qs('#pending-reports').textContent = reports.length;
+  qs('#stats-reports').textContent = `Denúncias: ${reports.length}`;
+}
+
+/* =========================
+   Actions
+   ========================= */
+function showUser(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return showNotif('Usuário não encontrado');
+  alert(`Usuário: ${u.name}\nEmail: ${u.email}\nStatus: ${u.status}`);
+}
+function banUser(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return showNotif('Usuário não encontrado');
+  if(!confirm(`Banir ${u.name}?`)) return;
+  u.status = 'banido';
+  renderUsers();
+  showNotif('Usuário banido');
+}
+function openEditModal(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  qs('#modal-title').textContent = 'Editar usuário';
+  qs('#edit-name').value = u.name;
+  qs('#edit-email').value = u.email;
+  qs('#modal-edit').classList.add('open');
+  qs('#modal-edit').setAttribute('aria-hidden','false');
+  qs('#edit-save').onclick = ()=>{
+    u.name = qs('#edit-name').value.trim() || u.name;
+    u.email = qs('#edit-email').value.trim() || u.email;
+    qs('#modal-edit').classList.remove('open');
+    renderUsers();
+    showNotif('Usuário atualizado');
+  };
+}
+qs('#edit-cancel').addEventListener('click', ()=> { qs('#modal-edit').classList.remove('open'); });
+
+function resolveReport(id){
+  if(!confirm('Marcar denúncia como resolvida?')) return;
+  reports = reports.filter(r=>r.id!==id);
+  renderReports();
+  showNotif('Denúncia resolvida');
+}
+
+/* Send game (fake upload) */
+qs('#btn-send').addEventListener('click', ()=>{
+  const name = qs('#g-name').value.trim();
+  const desc = qs('#g-desc').value.trim();
+  const link = qs('#g-link').value.trim();
+  if(!name || !link){ qs('#send-msg').textContent = 'Preencha nome e link.'; return; }
+  const id = 'g'+(Date.now()%100000);
+  gamesCache.unshift({id,name,desc,img:qs('#g-img').value.trim(),link,ts:Date.now()});
+  renderCatalog();
+  qs('#g-name').value=''; qs('#g-desc').value=''; qs('#g-img').value=''; qs('#g-link').value='';
+  showNotif('Jogo enviado (simulado)');
+});
+
+/* Config save */
+qs('#save-config').addEventListener('click', ()=>{
+  const name = qs('#panel-name').value.trim() || 'GbzStore';
+  const theme = qs('#theme-select').value;
+  // apply theme and store locally
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('gbz_panel_theme', theme);
+  showNotif('Configurações salvas');
+  // change title in sidebar (small)
+  qs('.logo h1').textContent = name;
+});
+
+/* NAV handling */
+qsa('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.getAttribute('data-tab');
+    qsa('.view').forEach(v=>v.style.display='none');
+    const view = qs('#'+tab);
+    if(view) view.style.display = 'block';
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+
+/* Search & sort (affects games shown) */
+qs('#global-search').addEventListener('input', applyFilters);
+qs('#sort-select').addEventListener('change', applyFilters);
+function applyFilters(){
+  const q = qs('#global-search').value.trim().toLowerCase();
+  let list = gamesCache.slice();
+  if(q) list = list.filter(i => (i.name && i.name.toLowerCase().includes(q)) || (i.desc && i.desc.toLowerCase().includes(q)));
+  const sort = qs('#sort-select').value;
+  if(sort==='name') list.sort((a,b)=> (a.name||'').localeCompare(b.name||'','pt-BR'));
+  else list.sort((a,b)=> (b.ts||0)-(a.ts||0));
+  renderCatalog(list);
+}
+
+/* quick refresh/export */
+qs('#btn-refresh').addEventListener('click', ()=> { renderCatalog(); renderUsers(); renderReports(); showNotif('Atualizado'); });
+qs('#btn-export').addEventListener('click', ()=>{
+  const data = JSON.stringify(gamesCache, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='gbz-games.json'; a.click(); URL.revokeObjectURL(url);
+  showNotif('Exportado JSON');
+});
+
+/* =========================
+   Anti-devtools (cliente) - basic
+   ========================= */
+let devtoolsOpen = false;
+function detectDevTools(){
+  const threshold = 160;
+  const wT = window.outerWidth - window.innerWidth > threshold;
+  const hT = window.outerHeight - window.innerHeight > threshold;
+  devtoolsOpen = wT || hT;
+  try{ const start = performance.now(); debugger; const elapsed = performance.now()-start; if(elapsed>100) devtoolsOpen = true; }catch(e){}
+  qs('#anti-status').textContent = devtoolsOpen ? 'detectado' : 'ativado';
+  if(devtoolsOpen) showNotif('DevTools detectado — ações limitadas', 3000);
+}
+setInterval(detectDevTools, 1500);
+
+/* =========================
+   Init (render initial)
+   ========================= */
+function init(){
+  // load theme
+  const savedTheme = localStorage.getItem('gbz_panel_theme') || 'dark';
+  qs('#theme-select').value = savedTheme;
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  // initial render
+  renderCatalog();
+  renderUsers();
+  renderReports();
+  qs('#total-games').textContent = gamesCache.length;
+  qs('#sidebar-count').textContent = gamesCache.length;
+  // set default visible
+  qsa('.view').forEach(v=>v.style.display='none');
+  qs('#dashboard').style.display = 'block';
+}
+init();
+
+/* small keyboard anti-inspect */
+document.addEventListener('keydown',function(e){
+  if(e.key==='F12' || (e.ctrlKey && e.shiftKey && (e.key==='I' || e.key==='i'))){
+    e.preventDefault(); showNotif('Ação bloqueada (DevTools)', 1600);
   }
 });
 </script>
-
 </body>
 </html>
