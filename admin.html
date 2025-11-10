@@ -1,452 +1,169 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>GbzStore — Admin Panel (Login ativo)</title>
-
-<!-- Firebase compat libraries -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Admin - GbzStudio</title>
 <style>
-  :root{
-    --bg:#07101a; --panel:#0b1116; --muted:#9fb0c2; --accent:#ff8a00; --danger:#ff5a5a; --ok:#22c55e; --card:#071922; --border: rgba(255,255,255,0.04);
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#031021);color:#e8f5ff}
-  .wrap{display:flex;min-height:100vh}
-  aside{width:260px;background:var(--panel);padding:18px;border-right:1px solid var(--border);position:fixed;left:0;top:0;bottom:0}
-  main{margin-left:260px;padding:20px;flex:1}
-  .brand{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-  .logo{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff5a5a);display:flex;align-items:center;justify-content:center;font-weight:800;color:#071018}
-  h1{font-size:16px;margin:0}
-  nav button{display:block;width:100%;text-align:left;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);margin-bottom:6px;cursor:pointer;font-weight:700}
-  nav button.active{background:rgba(255,255,255,0.02);color:#fff;border:1px solid var(--border)}
-  .panel{background:linear-gradient(180deg,transparent,rgba(255,255,255,0.01));padding:12px;border-radius:8px;border:1px solid var(--border)}
-  .row{display:flex;gap:8px;align-items:center}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:12px}
-  .card{background:var(--card);padding:12px;border-radius:10px;border:1px solid var(--border)}
-  table{width:100%;border-collapse:collapse}
-  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:14px}
-  .muted{color:var(--muted);font-size:13px}
-  .btn{padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#071018;font-weight:800;cursor:pointer}
-  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
-  .btn.warn{background:var(--danger);color:#111}
-  .btn.ok{background:var(--ok);color:#011}
-  input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:inherit;margin-top:6px}
-  .small{font-size:13px;color:var(--muted)}
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:1200}
-  .modal.open{display:flex}
-  .dialog{background:#071022;padding:16px;border-radius:10px;width:100%;max-width:900px;border:1px solid var(--border)}
-  .log{font-family:monospace; font-size:12px; color:#cfe;}
-  .notice{padding:8px;border-radius:8px;background:#081427;border:1px solid rgba(255,255,255,0.02);margin-top:6px}
-  @media (max-width:900px){ aside{position:relative;width:100%;display:flex;flex-direction:row;gap:8px;overflow:auto} main{margin-left:0;padding:12px} }
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #0d0d0d;
+  color: #fff;
+  overflow-x: hidden;
+}
+header {
+  background: #111;
+  padding: 15px;
+  text-align: center;
+  font-size: 22px;
+  color: #ffa200;
+  font-weight: 700;
+  box-shadow: 0 0 15px #000;
+}
+nav {
+  width: 250px;
+  height: 100vh;
+  background: #111;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 30px;
+  box-shadow: 5px 0 15px #000;
+}
+nav button {
+  width: 80%;
+  padding: 12px;
+  margin: 8px 0;
+  background: #1a1a1a;
+  color: #ffa200;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: 0.3s;
+  cursor: pointer;
+}
+nav button:hover {
+  background: #ffa200;
+  color: #111;
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #ffa200;
+}
+main {
+  margin-left: 270px;
+  padding: 30px;
+}
+section {
+  display: none;
+  background: #141414;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px #000;
+}
+section.active {
+  display: block;
+  animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 0 10px #000;
+  transition: 0.2s;
+}
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px #ffa200;
+}
+footer {
+  text-align: center;
+  padding: 15px;
+  color: #777;
+  font-size: 14px;
+  margin-top: 40px;
+}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <!-- SIDEBAR -->
-  <aside>
-    <div class="brand">
-      <div class="logo">GT</div>
-      <div><h1>GbzStore Admin</h1><div class="small muted">Painel seguro</div></div>
+<header>Painel Admin - GbzStudio</header>
+
+<nav>
+  <button onclick="showSection('dashboard')">📊 Dashboard</button>
+  <button onclick="showSection('loja')">🛒 Loja</button>
+  <button onclick="showSection('usuarios')">👥 Gerenciar Usuários</button>
+  <button onclick="showSection('denuncias')">🚨 Denúncias</button>
+  <button onclick="showSection('config')">⚙️ Configurações</button>
+  <button onclick="showSection('enviar')">📤 Enviar Jogo</button>
+</nav>
+
+<main>
+  <section id="dashboard" class="active">
+    <h2>📊 Dashboard</h2>
+    <div class="card">Bem-vindo ao Painel Admin da <b>GbzStudio</b>.</div>
+    <div class="card">Aqui você pode visualizar estatísticas e informações gerais.</div>
+  </section>
+
+  <section id="loja">
+    <h2>🛒 Loja</h2>
+    <div class="card">Gerencie os itens disponíveis na loja do sistema.</div>
+    <div class="card">
+      <button style="background:#ffa200;color:#111;padding:10px 15px;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Adicionar Novo Item</button>
     </div>
+  </section>
 
-    <nav>
-      <button class="nav-btn active" data-view="overview">Visão geral</button>
-      <button class="nav-btn" data-view="manage-games">Gerenciar jogos</button>
-      <button class="nav-btn" data-view="manage-reports">Denúncias</button>
-      <button class="nav-btn" data-view="logs">Logs / Intrusões</button>
-      <button class="nav-btn" data-view="settings">Configurações</button>
-      <button class="nav-btn" data-view="logout">Sair</button>
-    </nav>
+  <section id="usuarios">
+    <h2>👥 Gerenciar Usuários</h2>
+    <div class="card">Veja e edite os usuários registrados no sistema.</div>
+    <div class="card">Função: Banir / Promover / Editar Usuário</div>
+  </section>
 
-    <div style="margin-top:12px" class="panel">
-      <div class="small">Status anti-hack: <strong id="anti-status">ativado</strong></div>
-      <div style="margin-top:8px" class="small">Versão: <strong>GbzAdmin v1</strong></div>
+  <section id="denuncias">
+    <h2>🚨 Denúncias</h2>
+    <div class="card">Aqui aparecem as denúncias enviadas pelos jogadores.</div>
+    <div class="card">Opções: Marcar como resolvida / Deletar / Ver detalhes</div>
+  </section>
+
+  <section id="config">
+    <h2>⚙️ Configurações</h2>
+    <div class="card">Configurações gerais do sistema e aparência do painel.</div>
+  </section>
+
+  <section id="enviar">
+    <h2>📤 Enviar Jogo</h2>
+    <div class="card">Envie novos jogos ou atualizações para o servidor.</div>
+    <div class="card">
+      <input type="file" style="padding:10px;background:#222;border:none;border-radius:10px;color:#ffa200;">
+      <button style="margin-top:10px;background:#ffa200;color:#111;padding:10px 15px;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Enviar</button>
     </div>
-  </aside>
+  </section>
 
-  <!-- MAIN -->
-  <main>
-    <!-- LOGIN / SESSION -->
-    <div id="login-wrap" class="panel" style="max-width:520px;margin-bottom:12px;">
-      <h2>Login Admin</h2>
-      <p class="small">Use as credenciais de teste abaixo para entrar.</p>
-      <label>Usuário</label>
-      <input id="admin-user" placeholder="admin">
-      <label>Senha</label>
-      <input id="admin-pass" type="password" placeholder="••••••">
-      <div style="margin-top:8px;display:flex;gap:8px;">
-        <button id="btn-login" class="btn">Entrar</button>
-        <button id="btn-cancel-login" class="btn ghost">Limpar</button>
-      </div>
-      <div id="login-msg" class="small muted" style="margin-top:8px"></div>
-      <div class="notice" style="margin-top:12px">
-        Credenciais de teste: <strong>admin / gbz123</strong>.  
-        Recomendo migrar depois para Firebase Auth para produção.
-      </div>
-    </div>
-
-    <!-- VIEWS -->
-    <div id="overview" class="view" style="display:none">
-      <h2>Visão geral</h2>
-      <div class="grid">
-        <div class="card">
-          <strong>Total de jogos</strong>
-          <div id="total-games" class="small" style="margin-top:8px">0</div>
-        </div>
-        <div class="card">
-          <strong>Total de cliques</strong>
-          <div id="total-clicks" class="small" style="margin-top:8px">0</div>
-        </div>
-        <div class="card">
-          <strong>Denúncias</strong>
-          <div id="total-reports" class="small" style="margin-top:8px">0</div>
-        </div>
-      </div>
-
-      <div style="margin-top:14px" class="card">
-        <h3>Últimos envios</h3>
-        <div id="recent-games" style="margin-top:8px"></div>
-      </div>
-    </div>
-
-    <div id="manage-games" class="view" style="display:none">
-      <h2>Gerenciar jogos</h2>
-      <div class="panel">
-        <div class="row">
-          <input id="search-games" placeholder="Pesquisar por nome ou tag">
-          <select id="filter-approved">
-            <option value="all">Todos</option>
-            <option value="approved">Aprovados</option>
-            <option value="pending">Pendente</option>
-          </select>
-          <button id="btn-search-games" class="btn ghost">Pesquisar</button>
-        </div>
-
-        <div style="margin-top:12px;overflow:auto;max-height:420px">
-          <table id="games-table">
-            <thead><tr><th>Nome</th><th>Tag</th><th>Cliques</th><th>Aprovado</th><th>Ações</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div id="manage-reports" class="view" style="display:none">
-      <h2>Denúncias</h2>
-      <div id="reports-panel" class="panel">
-        <div id="reports-list">Carregando...</div>
-      </div>
-    </div>
-
-    <div id="logs" class="view" style="display:none">
-      <h2>Logs / Intrusões</h2>
-      <div class="card" style="max-height:480px;overflow:auto;">
-        <pre id="logs-content" class="log">Carregando logs...</pre>
-      </div>
-      <div style="margin-top:12px">
-        <button id="btn-clear-logs" class="btn ghost">Limpar logs (apagar nó intrusions)</button>
-      </div>
-    </div>
-
-    <div id="settings" class="view" style="display:none">
-      <h2>Configurações</h2>
-      <div class="panel">
-        <label>Permitir uploads públicos</label>
-        <select id="setting-allow-uploads"><option value="true">Sim</option><option value="false">Não</option></select>
-
-        <label style="margin-top:8px">Detectar DevTools (anti-hack)</label>
-        <select id="setting-detect-devtools"><option value="true">Ativar</option><option value="false">Desativar</option></select>
-
-        <div style="margin-top:12px;display:flex;gap:8px;">
-          <button id="btn-save-settings" class="btn">Salvar</button>
-          <button id="btn-load-settings" class="btn ghost">Recarregar</button>
-        </div>
-        <div id="settings-msg" class="small muted" style="margin-top:8px"></div>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<!-- MODAL: Edit Game -->
-<div id="modal-edit" class="modal" aria-hidden="true">
-  <div class="dialog">
-    <h3>Editar jogo</h3>
-    <label>Nome</label><input id="edit-name">
-    <label>Descrição</label><textarea id="edit-desc"></textarea>
-    <label>Imagem URL</label><input id="edit-img">
-    <label>Link</label><input id="edit-link">
-    <label>Altura (px)</label><input id="edit-height" type="number" min="80" max="600" value="160">
-    <label>Aprovado</label>
-    <select id="edit-approved"><option value="true">Sim</option><option value="false">Não</option></select>
-    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
-      <button id="edit-cancel" class="btn ghost">Cancelar</button>
-      <button id="edit-save" class="btn">Salvar</button>
-    </div>
-    <div id="edit-msg" class="small muted" style="margin-top:8px"></div>
-  </div>
-</div>
+  <footer>© 2025 GbzStudio - Todos os direitos reservados.</footer>
+</main>
 
 <script>
-/* ======== FIREBASE ========== */
-const firebaseConfig = {
-  apiKey: "AIzaSyBfUH7E-il5iOttjtHKqrqiYsFAmNt9d5s",
-  authDomain: "booyahmind.firebaseapp.com",
-  databaseURL: "https://booyahmind-default-rtdb.firebaseio.com",
-  projectId: "booyahmind",
-  storageBucket: "booyahmind.firebasestorage.app",
-  messagingSenderId: "893667760259",
-  appId: "1:893667760259:web:4796b60789ed9916b0a3b6"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// sistema de navegação
+function showSection(id) {
+  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
-/* ======== HELPERS ========== */
-const qs = s=>document.querySelector(s);
-const qsa = s=>Array.from(document.querySelectorAll(s));
-const el = (t,c,html)=>{const e=document.createElement(t); if(c) e.className=c; if(html!==undefined) e.innerHTML=html; return e;};
-function sanitize(s){ if(!s) return ''; return String(s).replace(/<\/?[^>]+(>|$)/g,"").trim(); }
-function isValidUrl(u){ try{ const url=new URL(u); return ['http:','https:'].includes(url.protocol); }catch(e){return false;} }
-
-/* ======== SIMPLE LOCAL AUTH (TEST) ======== */
-const ADMIN_USER = 'admin';
-const ADMIN_PASSWORD = 'gbz123'; // suas credenciais pedidas
-
-let adminSession = false;
-if(sessionStorage.getItem('gbz_admin')==='1'){ adminSession = true; qs('#login-wrap').style.display='none'; showView('overview'); initAfterAuth(); }
-
-/* login button */
-qs('#btn-login').addEventListener('click', ()=>{
-  const u = qs('#admin-user').value.trim();
-  const p = qs('#admin-pass').value;
-  if(u === ADMIN_USER && p === ADMIN_PASSWORD){
-    sessionStorage.setItem('gbz_admin','1');
-    adminSession = true;
-    qs('#login-wrap').style.display='none';
-    qs('#login-msg').textContent = 'Login bem-sucedido.';
-    showView('overview');
-    initAfterAuth();
-  } else {
-    qs('#login-msg').textContent = 'Usuário ou senha incorretos.';
+// anti-inspect básico
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key))) {
+    e.preventDefault();
+    alert("🔒 Acesso restrito - AntiHack GbzStudio");
   }
 });
-qs('#btn-cancel-login').addEventListener('click', ()=> { qs('#admin-user').value=''; qs('#admin-pass').value=''; qs('#login-msg').textContent=''; });
-
-/* logout */
-qsa('.nav-btn[data-view="logout"]').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    sessionStorage.removeItem('gbz_admin');
-    location.reload();
-  });
-});
-
-/* view nav */
-qsa('.nav-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const v = btn.getAttribute('data-view');
-    if(v==='logout') return;
-    qsa('.view').forEach(x=>x.style.display='none');
-    qs('#'+v).style.display = 'block';
-    qsa('.nav-btn').forEach(nb=>nb.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
-
-/* ======== AFTER AUTH INITIALIZATION ======== */
-function initAfterAuth(){
-  setupListeners();
-  attachUIHandlers();
-  detectDevToolsLoop();
-}
-
-/* ======== DB LISTENERS & RENDER ======== */
-let gamesCache = [];
-const GAMES = 'games';
-const REPORTS = 'reports';
-const INTRUSIONS = 'intrusions';
-const SETTINGS = 'settings';
-
-function setupListeners(){
-  db.ref(GAMES).on('value', snap=>{
-    const val = snap.val() || {};
-    gamesCache = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
-    gamesCache = gamesCache.map(g=>({
-      id:g.id,
-      name:g.name||g.nome||'',
-      desc:g.desc||'',
-      img:g.img||'',
-      link:g.link||'',
-      tag:g.tag||'',
-      height:Number(g.height||g.altura||160),
-      approved: g.approved===true || g.approved==='true',
-      clicks: Number(g.clicks||0),
-      ts: g.ts||0
-    }));
-    gamesCache.sort((a,b)=> (b.ts||0) - (a.ts||0));
-    renderOverview();
-    renderGamesTable();
-  });
-
-  db.ref(REPORTS).on('value', snap=>{
-    const val = snap.val() || {};
-    const arr = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
-    renderReports(arr);
-  });
-
-  db.ref(INTRUSIONS).on('value', snap=>{
-    const val = snap.val() || {};
-    const arr = Object.keys(val).map(k=>Object.assign({id:k}, val[k]));
-    renderLogs(arr);
-  });
-
-  db.ref(SETTINGS).once('value').then(snap=>{
-    const st = snap.val() || {};
-    qs('#setting-allow-uploads').value = st.allowUploads===false ? 'false':'true';
-    qs('#setting-detect-devtools').value = st.detectDevtools===false ? 'false':'true';
-  });
-}
-
-/* render helpers */
-function renderOverview(){
-  qs('#total-games').textContent = gamesCache.length;
-  const totalClicks = gamesCache.reduce((s,g)=>s+(g.clicks||0),0);
-  qs('#total-clicks').textContent = totalClicks;
-  renderRecent();
-}
-function renderRecent(){
-  const wrap = qs('#recent-games'); wrap.innerHTML='';
-  gamesCache.slice(0,6).forEach(g=>{
-    const c = el('div','panel'); c.style.marginBottom='8px';
-    c.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${sanitize(g.name)}</strong><div class="small muted">${sanitize(g.desc||g.tag||'')}</div></div><div class="small">${g.clicks||0} clicks</div></div>`;
-    wrap.appendChild(c);
-  });
-}
-function renderGamesTable(){
-  const tbody = qs('#games-table tbody'); tbody.innerHTML='';
-  const filter = qs('#filter-approved').value;
-  const q = qs('#search-games').value.trim().toLowerCase();
-  gamesCache.forEach(g=>{
-    if(filter==='approved' && !g.approved) return;
-    if(filter==='pending' && g.approved) return;
-    if(q && !((g.name||'').toLowerCase().includes(q) || (g.tag||'').toLowerCase().includes(q))) return;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${sanitize(g.name)}</td><td>${sanitize(g.tag||'')}</td><td>${g.clicks||0}</td><td>${g.approved? 'Sim':'Não'}</td><td></td>`;
-    const actionsTd = tr.querySelector('td:last-child');
-    const btnApprove = el('button','btn ok', g.approved ? 'Reprovar' : 'Aprovar');
-    btnApprove.addEventListener('click', ()=> toggleApprove(g.id, !g.approved));
-    const btnEdit = el('button','btn ghost','Editar'); btnEdit.addEventListener('click', ()=> openEditModal(g));
-    const btnDelete = el('button','btn warn','Excluir'); btnDelete.addEventListener('click', ()=> deleteGame(g.id));
-    const btnInc = el('button','btn secondary','+click'); btnInc.addEventListener('click', ()=> incrementClicks(g.id,1));
-    const btnDec = el('button','btn ghost','-click'); btnDec.addEventListener('click', ()=> incrementClicks(g.id,-1));
-    actionsTd.append(btnApprove, btnEdit, btnInc, btnDec, btnDelete);
-    tbody.appendChild(tr);
-  });
-}
-
-/* reports */
-function renderReports(arr){
-  qs('#total-reports').textContent = arr.length;
-  const node = qs('#reports-list'); node.innerHTML = '';
-  if(arr.length===0){ node.innerHTML = '<div class="card">Sem denúncias</div>'; return; }
-  arr.forEach(r=>{
-    const c = el('div','card');
-    c.innerHTML = `<div><strong>Link/ID:</strong> ${sanitize(r.link||'')}</div><div class="small muted">Enviado: ${new Date(r.ts||0).toLocaleString()}</div><div style="margin-top:8px">${sanitize(r.reason||'')}</div>`;
-    const resolve = el('button','btn ok','Resolver'); resolve.addEventListener('click', ()=> resolveReport(r.id));
-    const remove = el('button','btn ghost','Excluir'); remove.addEventListener('click', ()=> deleteReport(r.id));
-    const row = el('div','row'); row.append(resolve, remove); c.appendChild(row);
-    node.appendChild(c);
-  });
-}
-
-/* logs */
-function renderLogs(arr){
-  const p = qs('#logs-content');
-  if(!arr || arr.length===0){ p.textContent = 'Sem registros'; return; }
-  p.textContent = arr.slice(-200).reverse().map(r=>`${new Date(r.ts||0).toLocaleString()} | ${r.type} | ${JSON.stringify(r).slice(0,300)}`).join('\n\n');
-}
-
-/* actions */
-function toggleApprove(id, to){
-  db.ref(`games/${id}/approved`).set(Boolean(to));
-}
-function openEditModal(g){
-  qs('#modal-edit').classList.add('open'); qs('#modal-edit').setAttribute('aria-hidden','false');
-  qs('#edit-name').value = g.name||''; qs('#edit-desc').value = g.desc||''; qs('#edit-img').value = g.img||''; qs('#edit-link').value = g.link||''; qs('#edit-height').value = g.height||160; qs('#edit-approved').value = g.approved ? 'true':'false';
-  qs('#edit-save').onclick = ()=> saveEdit(g.id);
-}
-qs('#edit-cancel').addEventListener('click', ()=> { qs('#modal-edit').classList.remove('open'); qs('#modal-edit').setAttribute('aria-hidden','true'); });
-function saveEdit(id){
-  const payload = {
-    name: sanitize(qs('#edit-name').value),
-    desc: sanitize(qs('#edit-desc').value),
-    img: qs('#edit-img').value.trim(),
-    link: qs('#edit-link').value.trim(),
-    height: Number(qs('#edit-height').value) || 160,
-    approved: qs('#edit-approved').value === 'true'
-  };
-  db.ref(`games/${id}`).update(payload).then(()=> { qs('#edit-msg').textContent = 'Salvo.'; setTimeout(()=>{qs('#modal-edit').classList.remove('open'); qs('#edit-msg').textContent='';},800); }).catch(err=>{ qs('#edit-msg').textContent = 'Erro ao salvar.'; console.error(err);});
-}
-function deleteGame(id){
-  if(!confirm('Excluir jogo permanentemente?')) return; db.ref(`games/${id}`).remove().then(()=> alert('Removido.'));
-}
-function incrementClicks(id, delta){
-  const ref = db.ref(`games/${id}/clicks`);
-  ref.transaction(curr=> { curr = Number(curr||0) + Number(delta); if(curr<0) curr=0; return curr; });
-}
-
-/* reports actions */
-function resolveReport(id){ db.ref(`${REPORTS}/${id}`).update({resolved:true, resolvedTs: Date.now()}); }
-function deleteReport(id){ if(!confirm('Excluir denúncia?')) return; db.ref(`${REPORTS}/${id}`).remove(); }
-
-/* clear logs */
-qs('#btn-clear-logs').addEventListener('click', ()=> { if(!confirm('Apagar registros de intrusão?')) return; db.ref(INTRUSIONS).set(null).then(()=> alert('Logs apagados.')); });
-
-/* settings */
-qs('#btn-load-settings').addEventListener('click', ()=> { db.ref(SETTINGS).once('value').then(snap=>{ const s=snap.val()||{}; qs('#setting-allow-uploads').value = s.allowUploads===false?'false':'true'; qs('#setting-detect-devtools').value = s.detectDevtools===false?'false':'true'; qs('#settings-msg').textContent='Carregado.'; setTimeout(()=>qs('#settings-msg').textContent='',1200); }); });
-qs('#btn-save-settings').addEventListener('click', ()=> { const allow = qs('#setting-allow-uploads').value==='true'; const detect = qs('#setting-detect-devtools').value==='true'; db.ref(SETTINGS).set({allowUploads:allow, detectDevtools:detect}).then(()=>{qs('#settings-msg').textContent='Salvo.'; setTimeout(()=>qs('#settings-msg').textContent='',1200);}).catch(e=>{qs('#settings-msg').textContent='Erro ao salvar.'}); });
-
-/* search/filter */
-qs('#btn-search-games').addEventListener('click', ()=> renderGamesTable());
-qs('#filter-approved').addEventListener('change', ()=> renderGamesTable());
-qs('#search-games').addEventListener('input', ()=> renderGamesTable());
-
-/* anti-hack detection (simple) */
-let devtoolsDetected = false;
-function detectDevToolsLoop(){
-  setInterval(()=> {
-    const threshold = 160;
-    const widthCond = window.outerWidth - window.innerWidth > threshold;
-    const heightCond = window.outerHeight - window.innerHeight > threshold;
-    devtoolsDetected = widthCond || heightCond;
-    try{ const start = performance.now(); debugger; const elapsed = performance.now() - start; if(elapsed > 100) devtoolsDetected = true; }catch(e){}
-    qs('#anti-status').textContent = devtoolsDetected ? 'detectado' : 'ativado';
-    if(devtoolsDetected) db.ref(INTRUSIONS).push({type:'devtools-detect', ua:navigator.userAgent, ts: Date.now()});
-  }, 1500);
-}
-
-/* mutation observer for script injection */
-const mo = new MutationObserver(muts=>{ muts.forEach(m=>{ if(m.addedNodes && m.addedNodes.length){ m.addedNodes.forEach(node=>{ if(node.tagName && node.tagName.toLowerCase()==='script'){ db.ref(INTRUSIONS).push({type:'script-injection', src: node.src || 'inline', ts: Date.now(), ua: navigator.userAgent}); try{ node.remove(); }catch(e){} } }); } }); });
-mo.observe(document.documentElement, {childList:true, subtree:true});
-
-/* init on load if session present */
-function initAfterAuth(){ setupListeners(); detectDevToolsLoop(); }
-
-/* small utility to render logs now */
-function renderLogsNow(){ db.ref(INTRUSIONS).limitToLast(200).once('value').then(snap=>{ const val=snap.val()||{}; const arr=Object.keys(val).map(k=>Object.assign({id:k}, val[k])); renderLogs(arr); }); }
-
-/* export helper (if needed) */
-function exportGamesJSON(){ db.ref(GAMES).once('value').then(snap=>{ const data = snap.val(); const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='gbz-games-export.json'; a.click(); URL.revokeObjectURL(url); }); }
-
-/* quick binding (if admin already logged) */
-if(sessionStorage.getItem('gbz_admin')==='1'){ initAfterAuth(); showView('overview'); qs('#login-wrap').style.display='none'; }
-
-/* small note: clicking buttons requires login; if you want quick access remove sessionStorage check (not recommended) */
-
 </script>
+
 </body>
 </html>
